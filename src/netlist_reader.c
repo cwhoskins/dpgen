@@ -6,22 +6,11 @@
  */
 
 #include "netlist_reader.h"
+#include "net.h"
+#include "logger.h"
+#include <stdint.h>
 #include <stdio.h>
-
-typedef enum {
-	VARIABLE,
-	NET_DECLARATION,
-	COMPONENT_DECLARATION,
-	COMMENT_DECLARATION,
-	WIDTH_DECLARATION
-} word_class;
-
-typedef enum {
-	ASSIGNMENT,
-	NET_DECLARE,
-	COMMENT,
-	ERROR
-} line_class;
+#include <string.h>
 
 void ReadNetlist(char* file_name) {
 
@@ -36,21 +25,13 @@ void ReadNetlist(char* file_name) {
 
 	   char* fget_rtn = fgets(&buff[0], 250, fp);
 	   if(NULL != fget_rtn) {
-		   word = strtok (buff," ,");
+		   word = strtok(buff," ,");
 		   while(NULL != word) {
 
 		   }
 	   }
 
 	   fclose(fp);
-}
-
-void ParseAssignmentLine(char* line) {
-
-}
-
-void ParseNetLine(char* line) {
-
 }
 
 void ParseAssignmentLine(char* line) {
@@ -65,21 +46,17 @@ void ParseDeclarationLine(char* line) {
 	net_sign declare_sign;
 	//Get Declaration Type (i.e. reg, wire, input, output)
 	word = strtok (line," ,");
-	switch(word) {
-	case "input\0":
+
+	if(0 == strcmp(word, "input\0")) {
 		declare_type = net_input;
-		break;
-	case "output\0":
+	} else if(0 == strcmp(word, "output\0")) {
 		declare_type = net_output;
-		break;
-	case "wire\0":
+	} else if(0 == strcmp(word, "wire\0")) {
 		declare_type = net_wire;
-		break;
-	case "reg\0":
+	} else if(0 == strcmp(word, "reg\0")) {
 		declare_type = net_reg;
-		break;
-	default: //Error
-		break;
+	} else {
+		//Error
 	}
 
 	//Determine Declaration sign
@@ -111,6 +88,7 @@ void ParseDeclarationLine(char* line) {
 	word = strtok (NULL," ,");
 	while(NULL != word) {
 		if(NULL != FindNet(word)) { //Declared Variable already exists
+			LogMessage("ERROR: Variable redefined", ERROR_LEVEL);
 			break;
 		}
 		InitializeNet(word, declare_type, declare_width, declare_sign);
@@ -122,15 +100,15 @@ void ParseDeclarationLine(char* line) {
 void ParseNetlistLine(char* line) {
 
 	char* word;
-	uint8_t type;
+	word_class word_type;
 	line_class line_type;
 
 	if(NULL != line) {
 	   word = strtok (line," ,");
 
 	   //First Word determines reading behavior
-	   type = CheckWordType(word); //Determine what type of word is (Variable, Net Declarative, Component Declarative, Width Declarative)
-	   switch(type) {
+	   word_type = CheckWordType(word); //Determine what type of word is (Variable, Net Declarative, Component Declarative, Width Declarative)
+	   switch(word_type) {
 	   case VARIABLE:
 		   //If var exists, assignment, otherwise error
 //		   if(NULL != FindNet(word) {
@@ -153,4 +131,8 @@ void ParseNetlistLine(char* line) {
 		   break;
 	   }
 	}
+}
+
+word_class CheckWordType(char* word) {
+	return WORD_ERROR;
 }

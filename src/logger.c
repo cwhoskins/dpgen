@@ -12,25 +12,25 @@ typedef struct struct_logger {
 	uint8_t minimum_log_level;
 } logger;
 
-logger log;
+logger dpgen_log;
 
 void SetLogFile(char* file_path) {
 
-	log.log_file = fopen(file_path, "w+");
-	if(NULL == log.log_file) {
-	   printf("Error: Logging Failure\r\n\0");
+	dpgen_log.log_file = fopen(file_path, "w+");
+	if(NULL == dpgen_log.log_file) {
+	   printf("Error: Logging Failure\r\n");
 	   return;
 	}
 }
 void SetLogLevel(uint8_t level) {
-	log.minimum_log_level = level;
+	dpgen_log.minimum_log_level = level;
 }
 void LogMessage(char* message, uint8_t level) {
-	if(level >= log.minimum_log_level) {
-		fprintf(log.log_file, message);
+	if(level >= dpgen_log.minimum_log_level) {
+		fprintf(dpgen_log.log_file, message);
 	}
 }
 
 void CloseLog() {
-	fclose(log.log_file);
+	fclose(dpgen_log.log_file);
 }

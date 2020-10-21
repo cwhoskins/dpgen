@@ -12,12 +12,13 @@
 #include <stdlib.h>
 
 #include "logger.h"
+#include "global.h"
 
 int main(void) {
 	SetLogFile("dpgen_log.txt");
-	SetLogLevel(0);
+	SetLogLevel(MESSAGE_LEVEL);
 
-	LogMessage("dpgen started\r\n\0", 1);
+	LogMessage("dpgen started\r\n\0", MESSAGE_LEVEL);
 
 	CloseLog();
 	return EXIT_SUCCESS;
