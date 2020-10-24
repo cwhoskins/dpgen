@@ -13,18 +13,24 @@
 #define ERROR_LEVEL 5
 #define WARNING_LEVEL 3
 #define MESSAGE_LEVEL 1
+#define NO_LOG 0
+
+#define SUCCESS 0
+#define FAILURE 1
 
 //Net
 typedef enum enum_net_type {
 	net_wire,
 	net_reg,
 	net_input,
-	net_output
+	net_output,
+	net_error
 } net_type;
 
 typedef enum {
 	net_signed,
-	net_unsigned
+	net_unsigned,
+	sign_error
 } net_sign;
 
 typedef struct struct_net net;
@@ -42,7 +48,10 @@ typedef enum enum_comp_type {
 	divider,
 	modulo,
 	incrementer,
-	decrementer
+	decrementer,
+	input_buffer,
+	output_buffer,
+	component_unknown
 } component_type;
 
 //Netlist Reader
@@ -63,5 +72,8 @@ typedef enum {
 } line_class;
 
 typedef struct struct_component component;
+
+//Circuit
+typedef struct struct_circuit circuit;
 
 #endif /* GLOBAL_H_ */

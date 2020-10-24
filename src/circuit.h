@@ -11,7 +11,9 @@
 
 #include "global.h"
 
-net* FindNet(char* name);
-void InitializeNet(char* name, net_type type, uint8_t width, net_sign sign);
+circuit* CreateCircuit();
+net* FindNet(circuit* self, char* name);
+void AddNet(circuit* self, net* new_net);
+void DestroyCircuit(circuit* self);
 
 #endif /* CIRCUIT_H_ */

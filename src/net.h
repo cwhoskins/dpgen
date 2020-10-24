@@ -11,9 +11,13 @@
 #include <stdint.h>
 #include "global.h"
 
-net* InitializeNet(char* name, net_type type, net_sign sign, uint8_t width);
-net* FindNet(char* name);
-uint8_t AddConnection(net* cur_net, component* connection);
+net* CreateNet(char* name, net_type type, net_sign sign, uint8_t width);
+void GetNetName(net* self, char* buffer);
+net_type GetNetType(net* self);
+net_sign GetNetSign(net* self);
+void AddReceiver(net* self, component* new_receiver);
+void AddDriver(net* self, component* new_driver);
+void DestroyNet(net* self);
 
 
 #endif /* NET_H_ */
