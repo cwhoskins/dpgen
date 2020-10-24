@@ -184,7 +184,7 @@ uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit) {
 word_class CheckWordType(char* word) {
 
 	word_class ret_value = WORD_ERROR;
-
+	if(NULL == word) return COMMENT_DECLARATION;
 	if(0 == strcmp(word, "input") || 0 == strcmp(word, "output") || 0 == strcmp(word, "wire") || 0 == strcmp(word, "register")) {
 		ret_value = NET_DECLARATION;
 	} else if(component_unknown != ReadComponentType(word)) {
