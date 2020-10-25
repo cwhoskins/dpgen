@@ -21,8 +21,7 @@ int main(void) {
 	SetLogLevel(MESSAGE_LEVEL);
 	LogMessage("dpgen started\r\n\0", MESSAGE_LEVEL);
 
-	circuit* netlist_circuit = CreateCircuit();
-	ReadNetlist("474a_circuit1.txt", netlist_circuit);
+	TestComponentParsing();
 
 	CloseLog();
 	return EXIT_SUCCESS;

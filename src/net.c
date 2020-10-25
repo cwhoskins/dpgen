@@ -17,6 +17,7 @@ typedef struct struct_net {
 	net_type type;
 	char name[64];
 	uint8_t width;
+	uint8_t is_scheduled;
 	net_sign sign;
 	component* driver;
 	component** receivers;
@@ -65,6 +66,18 @@ net_sign GetNetSign(net* self) {
 	return cur_sign;
 }
 
+uint8_t GetNetWidth(net* self) {
+	uint8_t cur_width = 0;
+	if(NULL != self) {
+		cur_width = self->width;
+	}
+	return cur_width;
+}
+
+void ScheduleNet(net* self, uint8_t is_scheduled) {
+
+}
+
 void AddDriver(net* self, component* new_driver) {
 	if(NULL != self && NULL != new_driver) {
 		if(NULL == self->driver) {
@@ -83,8 +96,8 @@ void AddReceiver(net* self, component* new_receiver) {
 }
 
 void DestroyNet(net* self) {
+	free(self->driver);
 	free(self->receivers);
-	free(self->name);
 	free(self);
 	self = NULL;
 }

@@ -14,6 +14,8 @@
 circuit* CreateCircuit();
 net* FindNet(circuit* self, char* name);
 void AddNet(circuit* self, net* new_net);
+void ScheduleASAP(circuit* self);
+void ScheduleALAP(circuit* self);
 void DestroyCircuit(circuit* self);
 
 #endif /* CIRCUIT_H_ */

@@ -18,6 +18,21 @@
 #define SUCCESS 0
 #define FAILURE 1
 
+#define FALSE 0
+#define TRUE 1
+
+//
+#define DP_OUT_IDX 0
+
+#define CTRL_IN_IDX 0
+
+#define DP_IN_A_IDX 0
+#define DP_IN_B_IDX 1
+
+#define LT_IDX 0
+#define EQ_IDX 1
+#define GT_IDX 2
+
 //Net
 typedef enum enum_net_type {
 	net_wire,
@@ -49,8 +64,6 @@ typedef enum enum_comp_type {
 	modulo,
 	incrementer,
 	decrementer,
-	input_buffer,
-	output_buffer,
 	component_unknown
 } component_type;
 
@@ -63,13 +76,6 @@ typedef enum {
 	WIDTH_DECLARATION,
 	WORD_ERROR
 } word_class;
-
-typedef enum {
-	ASSIGNMENT,
-	NET_DECLARE,
-	COMMENT,
-	ERROR
-} line_class;
 
 typedef struct struct_component component;
 

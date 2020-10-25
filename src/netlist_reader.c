@@ -9,9 +9,16 @@
 #include "net.h"
 #include "circuit.h"
 #include "logger.h"
+#include "component.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+
+static uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit);
+static uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit);
+static uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit);
+static uint8_t BufferNet(net* reg_net, circuit* netlist_circuit);
 
 uint8_t ReadNetlist(char* file_name, circuit* netlist_circuit) {
 
@@ -47,9 +54,11 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 	//Determine inputs, outputs, and component type
 	net* component_nets[4];
 	component_type type;
+	component* new_component;
 	char* word;
 	uint8_t word_idx = 1;
 	uint8_t net_idx = 0;
+	uint8_t comparator_type = EQ_IDX;
 	uint8_t ret = SUCCESS;
 
 	LogMessage("MSG: Parsing Variable Assignment\r\n", MESSAGE_LEVEL);
@@ -81,6 +90,8 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 				LogMessage("ERROR: Syntax - Assignment\r\n", ERROR_LEVEL);
 				ret = FAILURE;
 				break;
+			} else {
+				type = load_register;
 			}
 		} else if(4 == word_idx) {
 			type = ReadComponentType(word);
@@ -88,6 +99,14 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 				LogMessage("ERROR: Unknown Component\r\n", ERROR_LEVEL);
 				ret = FAILURE;
 				break;
+			} else if(comparator == type) {
+				if(0 == strcmp("<", word)) {
+					comparator_type = LT_IDX;
+				} else if(0 == strcmp("==", word)) {
+					comparator_type = EQ_IDX;
+				} else if(0 == strcmp(">", word)) {
+					comparator_type = GT_IDX;
+				}
 			}
 		} else {
 			LogMessage("ERROR: Syntax\r\n", ERROR_LEVEL);
@@ -97,9 +116,40 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 		word = strtok(NULL," ,\r\n");
 		word_idx++;
 	}
-//	component* InitializeComponent(char* name, component_type type);
-//	uint8_t SetInput(component* cur_component, net* input, uint8_t input_idx);
-//	uint8_t SetOutput(component* cur_component, net* output, uint8_t output_idx);
+	//Check if output net needs to be buffered with register component
+	if((net_reg == GetNetType(component_nets[0]) || net_output == GetNetType(component_nets[0])) && type != load_register) {
+		if(SUCCESS != BufferNet(component_nets[0], netlist_circuit)) {
+			ret = FAILURE;
+		}
+	}
+
+	new_component = CreateComponent(type);
+	if(NULL != new_component) {
+		uint8_t dp_output_idx = 0;
+		uint8_t output_ctrl_idx = 0;
+		uint8_t input_a_idx = 1;
+		uint8_t input_b_idx = 2;
+		uint8_t input_ctrl_idx = 2;
+
+		switch(type) {
+		case mux2x1:
+			input_b_idx = 3;
+			input_a_idx = 2;
+			input_ctrl_idx = 1;
+			break;
+		default:
+			break;
+		}
+
+		SetDatapathInput(new_component, component_nets[input_a_idx], DP_IN_A_IDX);
+		SetDatapathInput(new_component, component_nets[input_b_idx], DP_IN_B_IDX);
+		SetDatapathOutput(new_component, component_nets[dp_output_idx], DP_OUT_IDX);
+		SetControlInput(new_component, component_nets[input_ctrl_idx], CTRL_IN_IDX);
+		SetControlOutput(new_component, component_nets[output_ctrl_idx], comparator_type);
+
+	} else {
+		ret = FAILURE;
+	}
 	return ret;
 }
 
@@ -179,6 +229,37 @@ uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit) {
 	   }
 	}
 	return ret;
+}
+
+uint8_t BufferNet(net* reg_net, circuit* netlist_circuit) {
+
+	uint8_t ret_value = SUCCESS;
+	char new_net_name[64], old_net_name[64];
+	net* buffered_net = reg_net;
+	net* unbuffered_net = NULL;
+	component* new_reg;
+	if(NULL != reg_net && NULL != netlist_circuit) {
+		GetNetName(reg_net, old_net_name);
+		strcpy(new_net_name, "reg_in_");
+		strcat(new_net_name, old_net_name);
+		unbuffered_net = CreateNet(new_net_name, net_wire, GetNetSign(reg_net), GetNetWidth(reg_net));
+		if(NULL != unbuffered_net) {
+			AddNet(netlist_circuit, unbuffered_net);
+			new_reg =  CreateComponent(load_register);
+			if(NULL != new_reg) {
+				SetDatapathInput(new_reg, unbuffered_net, DP_IN_A_IDX);
+				SetDatapathOutput(new_reg, buffered_net, DP_OUT_IDX);
+				reg_net = unbuffered_net;
+			} else {
+				//Error
+				ret_value = FAILURE;
+			}
+		} else {
+			//Error
+			ret_value = FAILURE;
+		}
+	}
+	return ret_value;
 }
 
 word_class CheckWordType(char* word) {
@@ -501,11 +582,51 @@ void TestNetlistReader() {
 	}
 }
 
-void TestLineParsing() {
-//	"input Int8 a, b, c"
-//	"output Int8 z"
-//	"output Int16 x"
-//	"wire Int8 d, e"
-//	"wire Int16 f, g"
-//	"wire Int16 xwire"
+void TestComponentParsing() {
+	uint8_t idx;
+	circuit* test_circuit;
+	char line[512];
+	net* a;
+	net* b;
+	net* o;
+	net* sel;
+
+	a = CreateNet("a", net_input, net_signed, 8);
+	b = CreateNet("b", net_input, net_signed, 8);
+	sel = CreateNet("sel", net_input, net_unsigned, 1);
+	o = CreateNet("o", net_output, net_signed, 8);
+	test_circuit = CreateCircuit();
+	if(NULL == test_circuit) {
+		printf("Test Failure - Circuit Instantiation\r\n");
+		return;
+	}
+
+	AddNet(test_circuit, a);
+	AddNet(test_circuit, b);
+	AddNet(test_circuit, sel);
+	AddNet(test_circuit, o);
+
+	const char* test_cp_lines[] = {
+			"o = b\n",
+			"o = a + b\n",
+			"o = a - b\n",
+			"o = a * b\n",
+			"o = a > b\n",
+			"o = a < b\n",
+			"o = a == b\n",
+			"o = sel ? a : b\n",
+			"o = a >> b\n",
+			"o = a << b\n",
+			"o = a / b\n",
+			"o = a % b\n",
+			"o = a + 1\n",
+			"o = a - 1\n"
+	};
+
+#define test_cp_cases (sizeof (test_cp_lines) / sizeof (const char *))
+
+	for(idx = 0; idx < test_cp_cases; idx++) {
+		strcpy(line, test_cp_lines[idx]);
+		ParseNetlistLine(line, test_circuit);
+	}
 }
