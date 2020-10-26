@@ -22,6 +22,8 @@ typedef struct struct_circuit {
 	uint8_t num_inputs;
 	uint8_t num_outputs;
 	uint8_t num_components;
+
+	float critical_path_ns;
 } circuit;
 
 circuit* CreateCircuit() {
@@ -32,6 +34,7 @@ circuit* CreateCircuit() {
 		new_circuit->num_nets = 0;
 		new_circuit->num_inputs = 0;
 		new_circuit->num_outputs = 0;
+		new_circuit->critical_path_ns = 0.0f;
 		new_circuit->input_nets = (net**) malloc(max_inputs * sizeof(net*));
 		new_circuit->netlist = (net**) malloc(max_nets * sizeof(net*));
 		new_circuit->output_nets = (net**) malloc(max_nets * sizeof(net*));
@@ -72,26 +75,35 @@ void AddNet(circuit* self, net* new_net) {
 	return;
 }
 
-void ScheduleComponentASAP(circuit* self, component* scheduled_comp, uint8_t timeslot) {
-
-}
-
-void ScheduleASAP(circuit* self) {
-	uint8_t idx, rx_idx;
-
+void CalculateCircuitDelay(circuit* self) {
+	uint8_t idx;
+	const float input_delay_ns = 0.0f;
+	float max_delay = 0.0f;
 	//Reset netlist for new scheduling
 	for(idx = 0; idx < self->num_nets;idx++) {
-		if(net_input != GetNetType(self->netlist[idx])) {
-			ScheduleNet(self->netlist[idx], FALSE);
-		} else {
-			ScheduleNet(self->netlist[idx], TRUE);
+		ResetNetDelay(self->netlist[idx]);
+	}
+
+	for(idx = 0;idx < self->num_inputs; idx++) {
+		UpdatePathDelay_Net(self->input_nets[idx], input_delay_ns);
+	}
+
+	//Find critical path value
+	for(idx = 0; idx < self->num_nets;idx++) {
+		if(max_delay < GetNetDelay(self->netlist[idx])) {
+			max_delay = GetNetDelay(self->netlist[idx]);
 		}
 	}
+	self->critical_path_ns = max_delay;
 
 }
 
-void ScheduleALAP(circuit* self) {
-
+float GetCriticalPath(circuit* self) {
+	float critical_path_ns = -1.0f;
+	if(NULL != self) {
+		critical_path_ns = self->critical_path_ns;
+	}
+	return critical_path_ns;
 }
 
 void DestroyCircuit(circuit* self) {

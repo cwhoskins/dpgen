@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "component.h"
+#include "logger.h"
 #include "net.h"
 
 const uint8_t max_dp_inputs = 2;
@@ -16,12 +17,9 @@ const uint8_t max_ctrl_outputs = 3;
 
 typedef struct struct_component {
 	component_type type;
-	float delay;
+	float delay_ns;
 	net_sign sign;
 	uint8_t width;
-
-	uint8_t asap_time;
-	uint8_t alap_time;
 
 	uint8_t num_dp_inputs;
 	uint8_t num_ctrl_inputs;
@@ -41,8 +39,7 @@ component* CreateComponent(component_type type) {
 		if(component_unknown != type) {
 			new_component->type = type;
 			new_component->width = 0;
-			new_component->asap_time = 255;
-			new_component->alap_time = 0;
+			new_component->delay_ns = 0.0f;
 
 			//Initialize all net links to NULL
 			for(idx = 0; idx < max_dp_inputs; idx++) {
@@ -94,6 +91,24 @@ component* CreateComponent(component_type type) {
 		}
 	}
 	return new_component;
+}
+
+void UpdatePathDelay_Component(component* self, float path_delay_ns) {
+	uint8_t output_idx;
+	float new_delay_ns;
+	if(load_register == self->type) {
+		new_delay_ns = self->delay_ns;
+	} else {
+		new_delay_ns = path_delay_ns + self->delay_ns;
+	}
+	if(NULL != self) {
+		for(output_idx = 0; output_idx < self->num_ctrl_outputs; output_idx++) {
+			UpdatePathDelay_Net(self->ctrl_outputs[output_idx], new_delay_ns);
+		}
+		for(output_idx = 0; output_idx < self->num_dp_outputs; output_idx++) {
+			UpdatePathDelay_Net(self->dp_outputs[output_idx], new_delay_ns);
+		}
+	}
 }
 
 uint8_t SetControlInput(component* self, net* ctrl_input, uint8_t ctrl_idx) {
@@ -159,4 +174,74 @@ uint8_t SetControlOutput(component* self, net* output, uint8_t output_idx) {
 		ret_value = FAILURE;
 	}
 	return ret_value;
+}
+
+void UpdateComponentDelay(component* self) {
+	uint8_t width_idx;
+	if(NULL != self) {
+		switch(self->width) {
+		case 1:
+			width_idx = 0;
+			break;
+		case 2:
+			width_idx = 1;
+			break;
+		case 8:
+			width_idx = 2;
+			break;
+		case 16:
+			width_idx = 3;
+			break;
+		case 32:
+			width_idx = 4;
+			break;
+		case 64:
+			width_idx = 5;
+			break;
+		default:
+			LogMessage("ERROR: Incorrect Component Width\r\n", ERROR_LEVEL);
+			return;
+			break;
+		}
+		switch(self->type) {
+		case load_register:
+			self->delay_ns = reg_delays[width_idx];
+			break;
+		case adder:
+			self->delay_ns = add_delays[width_idx];
+			break;
+		case subtractor:
+			self->delay_ns = sub_delays[width_idx];
+			break;
+		case multiplier:
+			self->delay_ns = mul_delays[width_idx];
+			break;
+		case divider:
+			self->delay_ns = div_delays[width_idx];
+			break;
+		case modulo:
+			self->delay_ns = mod_delays[width_idx];
+			break;
+		case mux2x1:
+			self->delay_ns = mux2x1_delays[width_idx];
+			break;
+		case comparator:
+			self->delay_ns = comp_delays[width_idx];
+			break;
+		case shift_right:
+			self->delay_ns = shr_delays[width_idx];
+			break;
+		case shift_left:
+			self->delay_ns = shl_delays[width_idx];
+			break;
+		case incrementer:
+			self->delay_ns = inc_delays[width_idx];
+			break;
+		case decrementer:
+			self->delay_ns = dec_delays[width_idx];
+			break;
+		default:
+			break;
+		}
+	}
 }

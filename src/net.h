@@ -17,8 +17,11 @@ void GetNetName(net* self, char* buffer);
 net_type GetNetType(net* self);
 net_sign GetNetSign(net* self);
 uint8_t GetNetWidth(net* self);
+float GetNetDelay(net* self);
 
-void ScheduleNet(net* self, uint8_t is_scheduled);
+void ResetNetDelay(net* self);
+void UpdatePathDelay_Net(net* self, float path_delay_ns);
+
 void AddReceiver(net* self, component* new_receiver);
 void AddDriver(net* self, component* new_driver);
 void DestroyNet(net* self);

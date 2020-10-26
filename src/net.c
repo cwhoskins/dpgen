@@ -22,6 +22,7 @@ typedef struct struct_net {
 	component* driver;
 	component** receivers;
 	uint8_t num_receivers;
+	float delay_ns;
 } net;
 
 const uint8_t max_receivers = 32;
@@ -35,6 +36,7 @@ net* CreateNet(char* name, net_type type, net_sign sign, uint8_t width) {
 		new_net->sign = sign;
 		new_net->width = width;
 		new_net->driver = NULL;
+		new_net->delay_ns = -1.0f;
 		new_net->num_receivers = 0;
 		new_net->receivers = (component**) malloc(max_receivers * sizeof(component*));
 		if(NULL == new_net->receivers) {
@@ -43,6 +45,25 @@ net* CreateNet(char* name, net_type type, net_sign sign, uint8_t width) {
 	}
 	return new_net;
 }
+
+void ResetNetDelay(net* self) {
+	if(NULL != self) {
+		self->delay_ns = -1.0f;
+	}
+}
+
+void UpdatePathDelay_Net(net* self, float path_delay_ns) {
+	uint8_t idx;
+	if(NULL != self) {
+		if(path_delay_ns > self->delay_ns) {
+			self->delay_ns = path_delay_ns;
+			for(idx = 0; idx < self->num_receivers;idx++) {
+				UpdatePathDelay_Component(self->receivers[idx], path_delay_ns);
+			}
+		}
+	}
+}
+
 void GetNetName(net* self, char* buffer) {
 	if(NULL != self) {
 		strcpy(buffer, self->name);
@@ -72,10 +93,6 @@ uint8_t GetNetWidth(net* self) {
 		cur_width = self->width;
 	}
 	return cur_width;
-}
-
-void ScheduleNet(net* self, uint8_t is_scheduled) {
-
 }
 
 void AddDriver(net* self, component* new_driver) {
