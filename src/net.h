@@ -26,5 +26,7 @@ void AddReceiver(net* self, component* new_receiver);
 void AddDriver(net* self, component* new_driver);
 void DestroyNet(net* self);
 
+void PrintNet(net* self, char* buf);
+
 
 #endif /* NET_H_ */

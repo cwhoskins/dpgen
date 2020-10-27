@@ -118,3 +118,19 @@ void DestroyNet(net* self) {
 	free(self);
 	self = NULL;
 }
+
+void PrintNet(FILE* fp, net* self) {
+
+	char net_type[] = "";
+	char net_name[] = "";
+	int net_width = 0;
+	int start_val = 0;
+	
+
+	strcat(net_type, GetNetType(self));
+	net_width = GetNetWidth(self) - 1;
+	strcat(net_name, GetNetName(self));
+
+	fprintf(fp, "\t%s [%d:0] %s;\n", net_type, net_width, net_name);
+
+}
