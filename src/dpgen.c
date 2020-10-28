@@ -15,6 +15,7 @@
 #include "global.h"
 #include "netlist_reader.h"
 #include "circuit.h"
+#include "net.h"
 
 int main(int argc, char *argv[]) {
 	SetLogFile("dpgen_log.txt");
@@ -43,4 +44,7 @@ int main(int argc, char *argv[]) {
 
 	PrintFile(verilog_file, CIRCUIT);
 	*/
+
+	TestPrintNet();
+	
 }

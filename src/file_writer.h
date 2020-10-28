@@ -3,5 +3,6 @@
 
 #include "global.h"
 
-void PrintFile(char* file_name, circuit* netlist_circuit);
+void PrintFile(char* file_name, circuit* circ);
 
+#endif
