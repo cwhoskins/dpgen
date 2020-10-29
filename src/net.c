@@ -87,6 +87,14 @@ net_sign GetNetSign(net* self) {
 	return cur_sign;
 }
 
+float GetNetDelay(net* self) {
+	float delay = -1.0f;
+	if(NULL != self) {
+		delay = self->delay_ns;
+	}
+	return delay;
+}
+
 uint8_t GetNetWidth(net* self) {
 	uint8_t cur_width = 0;
 	if(NULL != self) {
@@ -120,7 +128,7 @@ void DestroyNet(net* self) {
 }
 
 void TestPrintNet() {
-	char name = "a";
+	char* name = "a";
 	net_type type = net_input;
 	net_sign sign = net_unsigned;
 	uint8_t width = 8;
