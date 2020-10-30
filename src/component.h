@@ -22,6 +22,6 @@ uint8_t SetDatapathInput(component* self, net* dp_input, uint8_t dp_idx);
 uint8_t SetDatapathOutput(component* self, net* output, uint8_t output_idx);
 uint8_t SetControlOutput(component* self, net* output, uint8_t output_idx);
 void UpdateComponentDelay(component* self);
-
+void DestroyComponent(component* self);
 
 #endif /* COMPONENT_H_ */

@@ -17,5 +17,6 @@ void AddNet(circuit* self, net* new_net);
 void CalculateCircuitDelay(circuit* self);
 float GetCriticalPath(circuit* self);
 void DestroyCircuit(circuit* self);
+void PrintCircuit(circuit* self);
 
 #endif /* CIRCUIT_H_ */

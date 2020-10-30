@@ -20,5 +20,6 @@ net_sign ReadNetSign(char* word);
 
 void TestNetlistReader();
 void TestComponentParsing();
+void TestDeclarations();
 
 #endif /* NETLIST_READER_H_ */

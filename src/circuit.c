@@ -106,6 +106,13 @@ float GetCriticalPath(circuit* self) {
 	return critical_path_ns;
 }
 
+void PrintCircuit(circuit* self) {
+	uint8_t net_idx;
+	for(net_idx = 0; net_idx < self->num_nets; net_idx++) {
+		PrintNet(self->netlist[net_idx]);
+	}
+}
+
 void DestroyCircuit(circuit* self) {
 	uint8_t net_idx = 0;
 	while(net_idx < self->num_nets) {

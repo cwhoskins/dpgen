@@ -245,3 +245,10 @@ void UpdateComponentDelay(component* self) {
 		}
 	}
 }
+
+void DestroyComponent(component* self) {
+	if(NULL != self) {
+		free(self);
+		self = NULL;
+	}
+}

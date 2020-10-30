@@ -22,7 +22,7 @@ static uint8_t BufferNet(net* reg_net, circuit* netlist_circuit);
 
 uint8_t ReadNetlist(char* file_name, circuit* netlist_circuit) {
 
-	   FILE *fp;
+	   FILE* fp;
 	   char buff[255];
 	   char message[32];
 	   uint8_t line_number = 1;
@@ -183,8 +183,9 @@ uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit) {
 	}
 
 	//Get all variable declarations in current line
-	word = strtok (NULL," ,\r\n");
+	word = strtok (NULL," ,\r\n\t");
 	while(NULL != word) {
+		if(VARIABLE != CheckWordType(word)) break;
 		if(NULL != FindNet(netlist_circuit, word)) { //Declared Variable already exists
 			LogMessage("ERROR: Variable redefined\r\n", ERROR_LEVEL);
 			ret = FAILURE;
@@ -192,7 +193,7 @@ uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit) {
 		}
 		new_net = CreateNet(word, declare_type, declare_sign, declare_width);
 		AddNet(netlist_circuit, new_net);
-		word = strtok (NULL," ,\r\n");
+		word = strtok (NULL," ,\r\n\t");
 	}
 	return ret;
 }
@@ -629,4 +630,27 @@ void TestComponentParsing() {
 		strcpy(line, test_cp_lines[idx]);
 		ParseNetlistLine(line, test_circuit);
 	}
+}
+
+void TestDeclarations() {
+	const uint8_t num_files = 16;
+	uint8_t file_idx, ret_value;
+	circuit* test_circuit;
+	for(file_idx = 1; file_idx <= num_files; file_idx++) {
+		test_circuit = CreateCircuit();
+		if(NULL == test_circuit) {
+			printf("Error: Creating Circuit\r\n");
+			return;
+		}
+		char file_name[64];
+		sprintf(file_name, "./test_declarations/%d.txt", file_idx);
+		printf("Reading Circuit #%d\r\n", file_idx);
+		ret_value = ReadNetlist(file_name, test_circuit);
+	    if(SUCCESS != ret_value) {
+	    	printf("Error: File #%d\r\n", file_idx);
+	    }
+	    PrintCircuit(test_circuit);
+	    DestroyCircuit(test_circuit);
+	}
+
 }

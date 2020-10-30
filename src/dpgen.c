@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 	SetLogLevel(MESSAGE_LEVEL);
 	LogMessage("dpgen started\r\n\0", MESSAGE_LEVEL);
 
-	TestComponentParsing();
+	TestDeclarations();
 
 	CloseLog();
 	return EXIT_SUCCESS;
@@ -44,7 +44,5 @@ int main(int argc, char *argv[]) {
 
 	PrintFile(verilog_file, CIRCUIT);
 	*/
-
-	TestPrintNet();
 	
 }

@@ -121,10 +121,15 @@ void AddReceiver(net* self, component* new_receiver) {
 }
 
 void DestroyNet(net* self) {
-	free(self->driver);
-	free(self->receivers);
-	free(self);
-	self = NULL;
+	if(NULL != self) {
+		DestroyComponent(self->driver);
+		while(self->num_receivers > 0) {
+			self->num_receivers--;
+			DestroyComponent(self->receivers[self->num_receivers]);
+		}
+		free(self);
+		self = NULL;
+	}
 }
 
 void TestPrintNet() {
@@ -136,21 +141,35 @@ void TestPrintNet() {
 	net* test = CreateNet(name, type, sign, width);
 	PrintNet(test);
 
+	DestroyNet(test);
 	return;
 
 }
 
 void PrintNet(net* self) {
-	//void PrintNet(FILE* fp, net* self)
-	int net_type = 0;
-	char net_name[] = "";
-	int net_width = 0;
-	
 
-	net_type = GetNetType(self);
-	net_width = GetNetWidth(self) - 1;
-	GetNetName(self, net_name);
+	net_type type = self->type;
+	uint8_t net_width = self->width;
+	char net_type_keyword[16];
 
-	printf("\t%s [%d:0] %s;\n", net_type, net_width, net_name);
+	switch(type) {
+	case net_input:
+		strcpy(net_type_keyword, "input");
+		break;
+	case net_output:
+		strcpy(net_type_keyword, "output reg");
+		break;
+	case net_wire:
+		strcpy(net_type_keyword, "wire");
+		break;
+	case net_reg:
+		strcpy(net_type_keyword, "reg");
+		break;
+	default:
+		strcpy(net_type_keyword, "err");
+		break;
+	}
+
+	printf("\t%s [%d:0] %s;\n", net_type_keyword, (net_width-1), self->name);
 
 }
