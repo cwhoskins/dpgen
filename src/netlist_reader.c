@@ -64,8 +64,8 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 
 	while(NULL != word) {
 		if(1 == word_idx || 3 == word_idx || 5 == word_idx || 7 == word_idx) { //output variable
-			if(1 == word_idx) component_nets[net_idx] = FindNet(netlist_circuit, first_word);
-			else component_nets[net_idx] = FindNet(netlist_circuit, word);
+			if(1 == word_idx) component_nets[net_idx] = Circuit_FindNet(netlist_circuit, first_word);
+			else component_nets[net_idx] = Circuit_FindNet(netlist_circuit, word);
 			if(NULL == component_nets[net_idx]) {
 				if(5 == word_idx && 0 == strcmp(word, "1")) {
 					if(adder == type) {
@@ -116,13 +116,13 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 		word_idx++;
 	}
 	//Check if output net needs to be buffered with register component
-	if((net_reg == GetNetType(component_nets[0]) || net_output == GetNetType(component_nets[0])) && type != load_register) {
+	if((net_reg == Net_GetType(component_nets[0]) || net_output == Net_GetType(component_nets[0])) && type != load_register) {
 		if(SUCCESS != BufferNet(component_nets[0], netlist_circuit)) {
 			ret = FAILURE;
 		}
 	}
 
-	new_component = CreateComponent(type);
+	new_component = Component_Create(type);
 	if(NULL != new_component) {
 		uint8_t output_idx = 0;
 		uint8_t input_a_idx = 1;
@@ -146,10 +146,11 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 			break;
 		}
 
-		AddInputPort(new_component, component_nets[input_a_idx], datapath_a);
-		AddInputPort(new_component, component_nets[input_b_idx], datapath_b);
-		if(port_error != control_type) AddInputPort(new_component, component_nets[input_ctrl_idx], control_type);
-		AddOutputPort(new_component, component_nets[output_idx], output_type);
+		Component_AddInputPort(new_component, component_nets[input_a_idx], datapath_a);
+		Component_AddInputPort(new_component, component_nets[input_b_idx], datapath_b);
+		if(port_error != control_type) Component_AddInputPort(new_component, component_nets[input_ctrl_idx], control_type);
+		Component_AddOutputPort(new_component, component_nets[output_idx], output_type);
+		Circuit_AddComponent(netlist_circuit, new_component);
 	} else {
 		ret = FAILURE;
 	}
@@ -189,13 +190,13 @@ uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit) {
 	word = strtok (NULL," ,\r\n\t");
 	while(NULL != word) {
 		if(VARIABLE != CheckWordType(word)) break;
-		if(NULL != FindNet(netlist_circuit, word)) { //Declared Variable already exists
+		if(NULL != Circuit_FindNet(netlist_circuit, word)) { //Declared Variable already exists
 			LogMessage("ERROR: Variable redefined\r\n", ERROR_LEVEL);
 			ret = FAILURE;
 			break;
 		}
-		new_net = CreateNet(word, declare_type, declare_sign, declare_width);
-		AddNet(netlist_circuit, new_net);
+		new_net = Net_Create(word, declare_type, declare_sign, declare_width);
+		Circuit_AddNet(netlist_circuit, new_net);
 		word = strtok (NULL," ,\r\n\t");
 	}
 	return ret;
@@ -214,7 +215,7 @@ uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit) {
 	   switch(word_type) {
 	   case VARIABLE:
 		   //If var exists, assignment, otherwise error
-		   if(NULL != FindNet(netlist_circuit, word)) {
+		   if(NULL != Circuit_FindNet(netlist_circuit, word)) {
 			   ret = ParseAssignmentLine(line, netlist_circuit);
 		   } else {
 			   ret = FAILURE;
@@ -243,16 +244,16 @@ uint8_t BufferNet(net* reg_net, circuit* netlist_circuit) {
 	net* unbuffered_net = NULL;
 	component* new_reg;
 	if(NULL != reg_net && NULL != netlist_circuit) {
-		GetNetName(reg_net, old_net_name);
+		Net_GetName(reg_net, old_net_name);
 		strcpy(new_net_name, "reg_in_");
 		strcat(new_net_name, old_net_name);
-		unbuffered_net = CreateNet(new_net_name, net_wire, GetNetSign(reg_net), GetNetWidth(reg_net));
+		unbuffered_net = Net_Create(new_net_name, net_wire, Net_GetSign(reg_net), Net_GetWidth(reg_net));
 		if(NULL != unbuffered_net) {
-			AddNet(netlist_circuit, unbuffered_net);
-			new_reg =  CreateComponent(load_register);
+			Circuit_AddNet(netlist_circuit, unbuffered_net);
+			new_reg =  Component_Create(load_register);
 			if(NULL != new_reg) {
-				AddOutputPort(new_reg, buffered_net, datapath_out);
-				AddInputPort(new_reg, unbuffered_net, datapath_a);
+				Component_AddOutputPort(new_reg, buffered_net, datapath_out);
+				Component_AddInputPort(new_reg, unbuffered_net, datapath_a);
 				reg_net = unbuffered_net;
 			} else {
 				//Error
@@ -595,20 +596,20 @@ void TestComponentParsing() {
 	net* o;
 	net* sel;
 
-	a = CreateNet("a", net_input, net_signed, 8);
-	b = CreateNet("b", net_input, net_signed, 8);
-	sel = CreateNet("sel", net_input, net_unsigned, 1);
-	o = CreateNet("o", net_output, net_signed, 8);
-	test_circuit = CreateCircuit();
+	a = Net_Create("a", net_input, net_signed, 8);
+	b = Net_Create("b", net_input, net_signed, 8);
+	sel = Net_Create("sel", net_input, net_unsigned, 1);
+	o = Net_Create("o", net_output, net_signed, 8);
+	test_circuit = Circuit_Create();
 	if(NULL == test_circuit) {
 		printf("Test Failure - Circuit Instantiation\r\n");
 		return;
 	}
 
-	AddNet(test_circuit, a);
-	AddNet(test_circuit, b);
-	AddNet(test_circuit, sel);
-	AddNet(test_circuit, o);
+	Circuit_AddNet(test_circuit, a);
+	Circuit_AddNet(test_circuit, b);
+	Circuit_AddNet(test_circuit, sel);
+	Circuit_AddNet(test_circuit, o);
 
 	const char* test_cp_lines[] = {
 			"o = b\n",
@@ -640,7 +641,7 @@ void TestDeclarations() {
 	uint8_t file_idx, ret_value;
 	circuit* test_circuit;
 	for(file_idx = 1; file_idx <= num_files; file_idx++) {
-		test_circuit = CreateCircuit();
+		test_circuit = Circuit_Create();
 		if(NULL == test_circuit) {
 			printf("Error: Creating Circuit\r\n");
 			return;
@@ -653,7 +654,7 @@ void TestDeclarations() {
 	    	printf("Error: File #%d\r\n", file_idx);
 	    }
 	    PrintCircuit(test_circuit);
-	    DestroyCircuit(test_circuit);
+	    Circuit_Destroy(test_circuit);
 	}
 
 }

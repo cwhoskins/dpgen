@@ -26,7 +26,7 @@ typedef struct struct_circuit {
 	float critical_path_ns;
 } circuit;
 
-circuit* CreateCircuit() {
+circuit* Circuit_Create() {
 	const uint8_t max_inputs = 32;
 	const uint8_t max_nets = 32;
 	circuit* new_circuit = (circuit*) malloc(sizeof(circuit));
@@ -38,19 +38,20 @@ circuit* CreateCircuit() {
 		new_circuit->input_nets = (net**) malloc(max_inputs * sizeof(net*));
 		new_circuit->netlist = (net**) malloc(max_nets * sizeof(net*));
 		new_circuit->output_nets = (net**) malloc(max_nets * sizeof(net*));
+		new_circuit->component_list = (component**) malloc(max_nets * sizeof(component*));
 	}
 	if(NULL == new_circuit->input_nets || NULL == new_circuit->netlist || NULL == new_circuit->output_nets || NULL == new_circuit->component_list) {
-		DestroyCircuit(new_circuit);
+		Circuit_Destroy(new_circuit);
 	}
 	return new_circuit;
 }
 
-net* FindNet(circuit* self, char* name) {
+net* Circuit_FindNet(circuit* self, char* name) {
 	uint8_t net_idx = 0;
 	net* return_net = NULL;
 	char node_name[64];
 	while(net_idx < self->num_nets) {
-		GetNetName(self->netlist[net_idx], node_name);
+		Net_GetName(self->netlist[net_idx], node_name);
 		if(0 == strcmp(node_name, name)) {
 			return_net = self->netlist[net_idx];
 			break;
@@ -60,13 +61,13 @@ net* FindNet(circuit* self, char* name) {
 	return return_net;
 }
 
-void AddNet(circuit* self, net* new_net) {
+void Circuit_AddNet(circuit* self, net* new_net) {
 	if(NULL != new_net && NULL != self) {
 		self->netlist[self->num_nets] = new_net;
-		if(net_output == GetNetType(new_net)) {
+		if(net_output == Net_GetType(new_net)) {
 			self->output_nets[self->num_outputs] = new_net;
 			self->num_outputs++;
-		} else if(net_input == GetNetType(new_net)) {
+		} else if(net_input == Net_GetType(new_net)) {
 			self->input_nets[self->num_inputs] = new_net;
 			self->num_inputs++;
 		}
@@ -75,30 +76,53 @@ void AddNet(circuit* self, net* new_net) {
 	return;
 }
 
-void CalculateCircuitDelay(circuit* self) {
+void Circuit_AddComponent(circuit* self, component* new_component) {
+	if(NULL != self && NULL != new_component) {
+		self->component_list[self->num_components] = new_component;
+		self->num_components++;
+	}
+}
+
+component* Circuit_GetComponent(circuit* self, uint8_t idx) {
+	component* ret_value = NULL;
+	if(NULL != self) {
+		if(idx < self->num_components) ret_value = self->component_list[idx];
+	}
+	return ret_value;
+}
+
+uint8_t Circuit_GetNumComponent(circuit* self) {
+	uint8_t ret_value = 0;
+	if(NULL != self) {
+		ret_value = self->num_components;
+	}
+	return ret_value;
+}
+
+void Circuit_CalculateDelay(circuit* self) {
 	uint8_t idx;
 	const float input_delay_ns = 0.0f;
 	float max_delay = 0.0f;
 	//Reset netlist for new scheduling
 	for(idx = 0; idx < self->num_nets;idx++) {
-		ResetNetDelay(self->netlist[idx]);
+		Net_ResetDelay(self->netlist[idx]);
 	}
 
 	for(idx = 0;idx < self->num_inputs; idx++) {
-		UpdatePathDelay_Net(self->input_nets[idx], input_delay_ns);
+		Net_UpdatePathDelay(self->input_nets[idx], input_delay_ns);
 	}
 
 	//Find critical path value
 	for(idx = 0; idx < self->num_nets;idx++) {
-		if(max_delay < GetNetDelay(self->netlist[idx])) {
-			max_delay = GetNetDelay(self->netlist[idx]);
+		if(max_delay < Net_GetDelay(self->netlist[idx])) {
+			max_delay = Net_GetDelay(self->netlist[idx]);
 		}
 	}
 	self->critical_path_ns = max_delay;
 
 }
 
-float GetCriticalPath(circuit* self) {
+float Circuit_GetCriticalPath(circuit* self) {
 	float critical_path_ns = -1.0f;
 	if(NULL != self) {
 		critical_path_ns = self->critical_path_ns;
@@ -113,16 +137,21 @@ void PrintCircuit(circuit* self) {
 	}
 }
 
-void DestroyCircuit(circuit* self) {
+void Circuit_Destroy(circuit* self) {
 	uint8_t net_idx = 0;
 	if(NULL != self) {
 		while(net_idx < self->num_nets) {
-			DestroyNet(self->netlist[net_idx]);
+			Net_Destroy(self->netlist[net_idx]);
 			net_idx++;
+		}
+		while(self->num_components > 0 ){
+			self->num_components--;
+			Component_Destroy(self->component_list[self->num_components]);
 		}
 		free(self->output_nets);
 		free(self->input_nets);
 		free(self->netlist);
+		free(self->component_list);
 		free(self);
 		self = NULL;
 	}

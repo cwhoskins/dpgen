@@ -31,11 +31,11 @@ void PrintFile(char* file_name, circuit* circ) {
 
 void DeclareNet(net* self, char* line_buffer) {
 
-	net_type type = GetNetType(self);
-	uint8_t net_width = GetNetWidth(self);
+	net_type type = Net_GetType(self);
+	uint8_t net_width = Net_GetWidth(self);
 	char net_type_keyword[16];
 	char net_name[64];
-	GetNetName(self, net_name);
+	Net_GetName(self, net_name);
 
 	switch(type) {
 	case net_input:
@@ -71,16 +71,16 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 	char port_name[32];
 
 	if(NULL != self) {
-		num_ports = GetNumOutputs(self) + GetNumInputs(self);
+		num_ports = Component_GetNumOutputs(self) + Component_GetNumInputs(self);
 		for(io_idx = 0; io_idx < num_ports; io_idx++) {
 
-			if(io_idx < GetNumInputs(self)) {
-				temp_port = GetInputPort(self, io_idx);
+			if(io_idx < Component_GetNumInputs(self)) {
+				temp_port = Component_GetInputPort(self, io_idx);
 			} else {
-				temp_port = GetOutputPort(self, (io_idx - GetNumInputs(self)));
+				temp_port = Component_GetOutputPort(self, (io_idx - Component_GetNumInputs(self)));
 			}
 
-			GetNetName(temp_port.port_net, port_name);
+			Net_GetName(temp_port.port_net, port_name);
 			switch(temp_port.type) {
 			case datapath_a:
 				sprintf(temp_port_declaration, ".a(%s)", port_name);
@@ -115,9 +115,9 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 			}
 		}
 
-		width = GetComponentWidth(self);
+		width = Component_GetWidth(self);
 
-		type = GetComponentType(self);
+		type = Component_GetType(self);
 
 		switch(type) {
 		case load_register:
@@ -175,67 +175,67 @@ void TestComponentDeclaration() {
 	net* comp_o;
 	net* sel;
 
-	a = CreateNet("a", net_input, net_signed, 8);
-	b = CreateNet("b", net_input, net_signed, 8);
-	sel = CreateNet("sel", net_input, net_unsigned, 1);
-	o = CreateNet("o", net_output, net_signed, 8);
-	comp_o = CreateNet("gt", net_output, net_unsigned, 1);
+	a = Net_Create("a", net_input, net_signed, 8);
+	b = Net_Create("b", net_input, net_signed, 8);
+	sel = Net_Create("sel", net_input, net_unsigned, 1);
+	o = Net_Create("o", net_output, net_signed, 8);
+	comp_o = Net_Create("gt", net_output, net_unsigned, 1);
 	uint8_t comp_idx = 0;
 	for(uut_type = load_register; uut_type < component_unknown; uut_type++) {
-		uut = CreateComponent(uut_type);
-		AddInputPort(uut, a, datapath_a);
+		uut = Component_Create(uut_type);
+		Component_AddInputPort(uut, a, datapath_a);
 		switch(uut_type) {
 		case load_register:
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case adder:
-			AddInputPort(uut, b, datapath_b);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, datapath_b);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case subtractor:
-			AddInputPort(uut, b, datapath_b);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, datapath_b);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case multiplier:
-			AddInputPort(uut, b, datapath_b);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, datapath_b);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case divider:
-			AddInputPort(uut, b, datapath_b);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, datapath_b);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case modulo:
-			AddInputPort(uut, b, datapath_b);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, datapath_b);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case mux2x1:
-			AddInputPort(uut, b, datapath_b);
-			AddInputPort(uut, sel, mux_sel);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, datapath_b);
+			Component_AddInputPort(uut, sel, mux_sel);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case comparator:
-			AddInputPort(uut, b, datapath_b);
-			AddOutputPort(uut, comp_o, greater_than_out);
+			Component_AddInputPort(uut, b, datapath_b);
+			Component_AddOutputPort(uut, comp_o, greater_than_out);
 			break;
 		case shift_right:
-			AddInputPort(uut, b, shift_amount);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, shift_amount);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case shift_left:
-			AddInputPort(uut, b, shift_amount);
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddInputPort(uut, b, shift_amount);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case incrementer:
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		case decrementer:
-			AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, datapath_out);
 			break;
 		default:
 			break;
 		}
 		DeclareComponent(uut, NULL, comp_idx);
-		DestroyComponent(uut);
+		Component_Destroy(uut);
 		comp_idx++;
 	}
 }

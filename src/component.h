@@ -13,23 +13,23 @@
 
 
 
-component* CreateComponent(component_type type);
+component* Component_Create(component_type type);
 
-void UpdatePathDelay_Component(component* self, float path_delay_ns);
-void UpdateComponentDelay(component* self);
+void Component_UpdatePathDelay(component* self, float path_delay_ns);
+void Component_UpdateDelay(component* self);
 
-uint8_t AddInputPort(component* self, net* input, port_type type);
-uint8_t AddOutputPort(component* self, net* output, port_type type);
+uint8_t Component_AddInputPort(component* self, net* input, port_type type);
+uint8_t Component_AddOutputPort(component* self, net* output, port_type type);
 
 
-float GetComponentDelay(component* self);
-component_type GetComponentType(component* self);
-uint8_t GetComponentWidth(component* self);
-uint8_t GetNumInputs(component* self);
-uint8_t GetNumOutputs(component* self);
-port GetInputPort(component* self, uint8_t idx);
-port GetOutputPort(component* self, uint8_t idx);
+float Component_GetDelay(component* self);
+component_type Component_GetType(component* self);
+uint8_t Component_GetWidth(component* self);
+uint8_t Component_GetNumInputs(component* self);
+uint8_t Component_GetNumOutputs(component* self);
+port Component_GetInputPort(component* self, uint8_t idx);
+port Component_GetOutputPort(component* self, uint8_t idx);
 
-void DestroyComponent(component* self);
+void Component_Destroy(component* self);
 
 #endif /* COMPONENT_H_ */

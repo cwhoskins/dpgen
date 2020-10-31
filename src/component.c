@@ -28,7 +28,7 @@ typedef struct struct_component {
 
 } component;
 
-component* CreateComponent(component_type type) {
+component* Component_Create(component_type type) {
 	component* new_component = (component*) malloc(sizeof(component));
 	if(NULL != new_component) {
 		if(component_unknown != type) {
@@ -43,7 +43,7 @@ component* CreateComponent(component_type type) {
 	return new_component;
 }
 
-void UpdatePathDelay_Component(component* self, float path_delay_ns) {
+void Component_UpdatePathDelay(component* self, float path_delay_ns) {
 	uint8_t output_idx;
 	float new_delay_ns;
 	if(load_register == self->type) {
@@ -53,21 +53,21 @@ void UpdatePathDelay_Component(component* self, float path_delay_ns) {
 	}
 	if(NULL != self) {
 		for(output_idx = 0; output_idx < self->num_outputs; output_idx++) {
-			UpdatePathDelay_Net(self->output_ports[output_idx].port_net, new_delay_ns);
+			Net_UpdatePathDelay(self->output_ports[output_idx].port_net, new_delay_ns);
 		}
 	}
 }
 
-uint8_t AddInputPort(component* self, net* input, port_type type) {
+uint8_t Component_AddInputPort(component* self, net* input, port_type type) {
 	uint8_t ret_value = SUCCESS;
 	if(NULL != self && NULL != input) {
 		if(8 > self->num_inputs) {
 			self->input_ports[self->num_inputs].port_net = input;
 			self->input_ports[self->num_inputs].type = type;
 			self->num_inputs++;
-			AddReceiver(input, self);
-			if(GetNetWidth(input) > self->width && comparator == self->type) {
-				self->width = GetNetWidth(input);
+			Net_AddReceiver(input, self);
+			if(Net_GetWidth(input) > self->width && comparator == self->type) {
+				self->width = Net_GetWidth(input);
 			}
 		} else {
 			ret_value = FAILURE;
@@ -78,16 +78,16 @@ uint8_t AddInputPort(component* self, net* input, port_type type) {
 	return ret_value;
 }
 
-uint8_t AddOutputPort(component* self, net* output, port_type type) {
+uint8_t Component_AddOutputPort(component* self, net* output, port_type type) {
 	uint8_t ret_value = SUCCESS;
 	if(NULL != self && NULL != output) {
 		if(8 > self->num_outputs) {
 			self->output_ports[self->num_outputs].port_net = output;
 			self->output_ports[self->num_outputs].type = type;
 			self->num_outputs++;
-			AddDriver(output, self);
+			Net_AddDriver(output, self);
 			if(self->type != comparator) {
-				self->width = GetNetWidth(output);
+				self->width = Net_GetWidth(output);
 			}
 		} else {
 			ret_value = FAILURE;
@@ -98,7 +98,7 @@ uint8_t AddOutputPort(component* self, net* output, port_type type) {
 	return ret_value;
 }
 
-port GetInputPort(component* self, uint8_t idx) {
+port Component_GetInputPort(component* self, uint8_t idx) {
 	port ret_value;
 	ret_value.port_net = NULL;
 	ret_value.type = port_error;
@@ -108,7 +108,7 @@ port GetInputPort(component* self, uint8_t idx) {
 	return ret_value;
 }
 
-port GetOutputPort(component* self, uint8_t idx) {
+port Component_GetOutputPort(component* self, uint8_t idx) {
 	port ret_value;
 	ret_value.port_net = NULL;
 	ret_value.type = port_error;
@@ -118,7 +118,7 @@ port GetOutputPort(component* self, uint8_t idx) {
 	return ret_value;
 }
 
-uint8_t GetNumInputs(component* self) {
+uint8_t Component_GetNumInputs(component* self) {
 	uint8_t ret_value = 0;
 	if(NULL != self) {
 		ret_value = self->num_inputs;
@@ -126,7 +126,7 @@ uint8_t GetNumInputs(component* self) {
 	return ret_value;
 }
 
-uint8_t GetNumOutputs(component* self) {
+uint8_t Component_GetNumOutputs(component* self) {
 	uint8_t ret_value = 0;
 	if(NULL != self) {
 		ret_value = self->num_outputs;
@@ -135,7 +135,7 @@ uint8_t GetNumOutputs(component* self) {
 }
 
 
-void UpdateComponentDelay(component* self) {
+void Component_UpdateDelay(component* self) {
 	uint8_t width_idx;
 	if(NULL != self) {
 		switch(self->width) {
@@ -205,7 +205,7 @@ void UpdateComponentDelay(component* self) {
 	}
 }
 
-component_type GetComponentType(component* self) {
+component_type Component_GetType(component* self) {
 	component_type type = component_unknown;
 	if(NULL != self) {
 		type = self->type;
@@ -213,7 +213,7 @@ component_type GetComponentType(component* self) {
 	return type;
 }
 
-uint8_t GetComponentWidth(component* self) {
+uint8_t Component_GetWidth(component* self) {
 	uint8_t width = 0;
 	if(NULL != self) {
 		width = self->width;
@@ -221,7 +221,7 @@ uint8_t GetComponentWidth(component* self) {
 	return width;
 }
 
-void DestroyComponent(component* self) {
+void Component_Destroy(component* self) {
 	if(NULL != self) {
 		free(self);
 		self = NULL;

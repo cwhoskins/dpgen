@@ -27,7 +27,7 @@ typedef struct struct_net {
 
 const uint8_t max_receivers = 32;
 
-net* CreateNet(char* name, net_type type, net_sign sign, uint8_t width) {
+net* Net_Create(char* name, net_type type, net_sign sign, uint8_t width) {
 
 	net* new_net = (net*) malloc(sizeof(net));
 	if(NULL != new_net) {
@@ -40,38 +40,38 @@ net* CreateNet(char* name, net_type type, net_sign sign, uint8_t width) {
 		new_net->num_receivers = 0;
 		new_net->receivers = (component**) malloc(max_receivers * sizeof(component*));
 		if(NULL == new_net->receivers) {
-			DestroyNet(new_net);
+			Net_Destroy(new_net);
 		}
 	}
 	return new_net;
 }
 
-void ResetNetDelay(net* self) {
+void Net_ResetDelay(net* self) {
 	if(NULL != self) {
 		self->delay_ns = -1.0f;
 	}
 }
 
-void UpdatePathDelay_Net(net* self, float path_delay_ns) {
+void Net_UpdatePathDelay(net* self, float path_delay_ns) {
 	uint8_t idx;
 	if(NULL != self) {
 		if(path_delay_ns > self->delay_ns) {
 			self->delay_ns = path_delay_ns;
 			for(idx = 0; idx < self->num_receivers;idx++) {
-				UpdatePathDelay_Component(self->receivers[idx], path_delay_ns);
+				Component_UpdatePathDelay(self->receivers[idx], path_delay_ns);
 			}
 		}
 	}
 }
 
-void GetNetName(net* self, char* buffer) {
+void Net_GetName(net* self, char* buffer) {
 	if(NULL != self) {
 		strcpy(buffer, self->name);
 	}
 	return;
 }
 
-net_type GetNetType(net* self) {
+net_type Net_GetType(net* self) {
 	net_type cur_type = net_error;
 	if(NULL != self) {
 		cur_type = self->type;
@@ -79,7 +79,7 @@ net_type GetNetType(net* self) {
 	return cur_type;
 }
 
-net_sign GetNetSign(net* self) {
+net_sign Net_GetSign(net* self) {
 	net_sign cur_sign = sign_error;
 	if(NULL != self) {
 		cur_sign = self->sign;
@@ -87,7 +87,7 @@ net_sign GetNetSign(net* self) {
 	return cur_sign;
 }
 
-float GetNetDelay(net* self) {
+float Net_GetDelay(net* self) {
 	float delay = -1.0f;
 	if(NULL != self) {
 		delay = self->delay_ns;
@@ -95,7 +95,7 @@ float GetNetDelay(net* self) {
 	return delay;
 }
 
-uint8_t GetNetWidth(net* self) {
+uint8_t Net_GetWidth(net* self) {
 	uint8_t cur_width = 0;
 	if(NULL != self) {
 		cur_width = self->width;
@@ -103,7 +103,7 @@ uint8_t GetNetWidth(net* self) {
 	return cur_width;
 }
 
-void AddDriver(net* self, component* new_driver) {
+void Net_AddDriver(net* self, component* new_driver) {
 	if(NULL != self && NULL != new_driver) {
 		if(NULL == self->driver) {
 			self->driver = new_driver;
@@ -111,7 +111,7 @@ void AddDriver(net* self, component* new_driver) {
 	}
 }
 
-void AddReceiver(net* self, component* new_receiver) {
+void Net_AddReceiver(net* self, component* new_receiver) {
 	if(NULL != self && NULL != new_receiver) {
 		if(self->num_receivers < max_receivers) {
 			self->receivers[self->num_receivers] = new_receiver;
@@ -120,13 +120,9 @@ void AddReceiver(net* self, component* new_receiver) {
 	}
 }
 
-void DestroyNet(net* self) {
+void Net_Destroy(net* self) {
 	if(NULL != self) {
-		DestroyComponent(self->driver);
-		while(self->num_receivers > 0) {
-			self->num_receivers--;
-			DestroyComponent(self->receivers[self->num_receivers]);
-		}
+		free(self->receivers);
 		free(self);
 		self = NULL;
 	}
@@ -138,10 +134,10 @@ void TestPrintNet() {
 	net_sign sign = net_unsigned;
 	uint8_t width = 8;
 
-	net* test = CreateNet(name, type, sign, width);
+	net* test = Net_Create(name, type, sign, width);
 	PrintNet(test);
 
-	DestroyNet(test);
+	Net_Destroy(test);
 	return;
 
 }
