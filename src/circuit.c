@@ -115,13 +115,15 @@ void PrintCircuit(circuit* self) {
 
 void DestroyCircuit(circuit* self) {
 	uint8_t net_idx = 0;
-	while(net_idx < self->num_nets) {
-		DestroyNet(self->netlist[net_idx]);
-		net_idx++;
+	if(NULL != self) {
+		while(net_idx < self->num_nets) {
+			DestroyNet(self->netlist[net_idx]);
+			net_idx++;
+		}
+		free(self->output_nets);
+		free(self->input_nets);
+		free(self->netlist);
+		free(self);
+		self = NULL;
 	}
-	free(self->output_nets);
-	free(self->input_nets);
-	free(self->netlist);
-	free(self);
-	self = NULL;
 }

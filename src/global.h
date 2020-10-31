@@ -21,18 +21,6 @@
 #define FALSE 0
 #define TRUE 1
 
-//
-#define DP_OUT_IDX 0
-
-#define CTRL_IN_IDX 0
-
-#define DP_IN_A_IDX 0
-#define DP_IN_B_IDX 1
-
-#define LT_IDX 0
-#define EQ_IDX 1
-#define GT_IDX 2
-
 //Net
 typedef enum enum_net_type {
 	net_wire,
@@ -67,6 +55,18 @@ typedef enum enum_comp_type {
 	component_unknown
 } component_type;
 
+typedef enum {
+	datapath_a,
+	datapath_b,
+	datapath_out,
+	mux_sel,
+	shift_amount,
+	greater_than_out,
+	less_than_out,
+	equal_out,
+	port_error
+} port_type;
+
 //Netlist Reader
 typedef enum {
 	VARIABLE,
@@ -78,6 +78,11 @@ typedef enum {
 } word_class;
 
 typedef struct struct_component component;
+
+typedef struct {
+	net* port_net;
+	port_type type;
+} port;
 
 //Circuit
 typedef struct struct_circuit circuit;

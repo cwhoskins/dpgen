@@ -58,9 +58,8 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 	char* word;
 	uint8_t word_idx = 1;
 	uint8_t net_idx = 0;
-	uint8_t comparator_type = EQ_IDX;
 	uint8_t ret = SUCCESS;
-
+	port_type output_type = datapath_out;
 	LogMessage("MSG: Parsing Variable Assignment\r\n", MESSAGE_LEVEL);
 
 	while(NULL != word) {
@@ -101,11 +100,11 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 				break;
 			} else if(comparator == type) {
 				if(0 == strcmp("<", word)) {
-					comparator_type = LT_IDX;
+					output_type = less_than_out;
 				} else if(0 == strcmp("==", word)) {
-					comparator_type = EQ_IDX;
+					output_type = equal_out;
 				} else if(0 == strcmp(">", word)) {
-					comparator_type = GT_IDX;
+					output_type = greater_than_out;
 				}
 			}
 		} else {
@@ -125,28 +124,32 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 
 	new_component = CreateComponent(type);
 	if(NULL != new_component) {
-		uint8_t dp_output_idx = 0;
-		uint8_t output_ctrl_idx = 0;
+		uint8_t output_idx = 0;
 		uint8_t input_a_idx = 1;
 		uint8_t input_b_idx = 2;
 		uint8_t input_ctrl_idx = 2;
-
+		port_type control_type = port_error;
 		switch(type) {
 		case mux2x1:
+			control_type = mux_sel;
 			input_b_idx = 3;
 			input_a_idx = 2;
 			input_ctrl_idx = 1;
+			break;
+		case shift_left:
+			control_type = shift_amount;
+			break;
+		case shift_right:
+			control_type = shift_amount;
 			break;
 		default:
 			break;
 		}
 
-		SetDatapathInput(new_component, component_nets[input_a_idx], DP_IN_A_IDX);
-		SetDatapathInput(new_component, component_nets[input_b_idx], DP_IN_B_IDX);
-		SetDatapathOutput(new_component, component_nets[dp_output_idx], DP_OUT_IDX);
-		SetControlInput(new_component, component_nets[input_ctrl_idx], CTRL_IN_IDX);
-		SetControlOutput(new_component, component_nets[output_ctrl_idx], comparator_type);
-
+		AddInputPort(new_component, component_nets[input_a_idx], datapath_a);
+		AddInputPort(new_component, component_nets[input_b_idx], datapath_b);
+		if(port_error != control_type) AddInputPort(new_component, component_nets[input_ctrl_idx], control_type);
+		AddOutputPort(new_component, component_nets[output_idx], output_type);
 	} else {
 		ret = FAILURE;
 	}
@@ -248,8 +251,8 @@ uint8_t BufferNet(net* reg_net, circuit* netlist_circuit) {
 			AddNet(netlist_circuit, unbuffered_net);
 			new_reg =  CreateComponent(load_register);
 			if(NULL != new_reg) {
-				SetDatapathInput(new_reg, unbuffered_net, DP_IN_A_IDX);
-				SetDatapathOutput(new_reg, buffered_net, DP_OUT_IDX);
+				AddOutputPort(new_reg, buffered_net, datapath_out);
+				AddInputPort(new_reg, unbuffered_net, datapath_a);
 				reg_net = unbuffered_net;
 			} else {
 				//Error
