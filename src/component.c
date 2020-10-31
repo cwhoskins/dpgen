@@ -82,8 +82,8 @@ uint8_t AddOutputPort(component* self, net* output, port_type type) {
 	uint8_t ret_value = SUCCESS;
 	if(NULL != self && NULL != output) {
 		if(8 > self->num_outputs) {
-			self->output_ports[self->num_inputs].port_net = output;
-			self->output_ports[self->num_inputs].type = type;
+			self->output_ports[self->num_outputs].port_net = output;
+			self->output_ports[self->num_outputs].type = type;
 			self->num_outputs++;
 			AddDriver(output, self);
 			if(self->type != comparator) {

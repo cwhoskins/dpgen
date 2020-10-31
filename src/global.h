@@ -23,7 +23,7 @@
 
 //Net
 typedef enum enum_net_type {
-	net_wire,
+	net_wire=0,
 	net_reg,
 	net_input,
 	net_output,
@@ -31,7 +31,7 @@ typedef enum enum_net_type {
 } net_type;
 
 typedef enum {
-	net_signed,
+	net_signed=0,
 	net_unsigned,
 	sign_error
 } net_sign;
@@ -40,7 +40,7 @@ typedef struct struct_net net;
 
 //Component
 typedef enum enum_comp_type {
-	load_register,
+	load_register=0,
 	adder,
 	subtractor,
 	multiplier,
@@ -56,7 +56,7 @@ typedef enum enum_comp_type {
 } component_type;
 
 typedef enum {
-	datapath_a,
+	datapath_a=0,
 	datapath_b,
 	datapath_out,
 	mux_sel,
