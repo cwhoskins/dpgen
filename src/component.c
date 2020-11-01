@@ -35,7 +35,7 @@ component* Component_Create(component_type type) {
 			new_component->type = type;
 			new_component->width = 0;
 			new_component->delay_ns = 0.0f;
-
+			new_component->sign = net_unsigned;
 			new_component->num_inputs = 0;
 			new_component->num_outputs = 0;
 		}
@@ -66,6 +66,11 @@ uint8_t Component_AddInputPort(component* self, net* input, port_type type) {
 			self->input_ports[self->num_inputs].type = type;
 			self->num_inputs++;
 			Net_AddReceiver(input, self);
+			if(datapath_a == type || datapath_b == type) {
+				if(net_signed == Net_GetSign(input)) {
+					self->sign = net_signed;
+				}
+			}
 			if(Net_GetWidth(input) > self->width && comparator == self->type) {
 				self->width = Net_GetWidth(input);
 			}
@@ -86,8 +91,14 @@ uint8_t Component_AddOutputPort(component* self, net* output, port_type type) {
 			self->output_ports[self->num_outputs].type = type;
 			self->num_outputs++;
 			Net_AddDriver(output, self);
+			if(datapath_out == type) {
+				if(net_signed == Net_GetSign(output)) {
+					self->sign = net_signed;
+				}
+			}
 			if(self->type != comparator) {
 				self->width = Net_GetWidth(output);
+
 			}
 		} else {
 			ret_value = FAILURE;

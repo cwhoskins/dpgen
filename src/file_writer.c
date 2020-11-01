@@ -61,14 +61,15 @@ void DeclareNet(net* self, char* line_buffer) {
 
 void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 	component_type type;
-	uint8_t width;
+	uint8_t width, padding_length, padding_bit;
 	uint8_t io_idx, num_ports;
 	port temp_port;
 	char type_declaration[32];
 	char component_name[128];
 	char port_declaration[512] = "";
-	char temp_port_declaration[64];
-	char port_name[32];
+	char temp_port_declaration[128];
+	char port_net_name[16];
+	char port_name[64];
 
 	if(NULL != self) {
 		num_ports = Component_GetNumOutputs(self) + Component_GetNumInputs(self);
@@ -80,7 +81,21 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 				temp_port = Component_GetOutputPort(self, (io_idx - Component_GetNumInputs(self)));
 			}
 
-			Net_GetName(temp_port.port_net, port_name);
+			Net_GetName(temp_port.port_net, port_net_name);
+			if((Component_GetWidth(self) > Net_GetWidth(temp_port.port_net)) &&
+					(datapath_a == temp_port.type || datapath_b == temp_port.type)) {
+
+				padding_length = Component_GetWidth(self) - Net_GetWidth(temp_port.port_net);
+				padding_bit = Net_GetWidth(temp_port.port_net) - 1;
+				if(net_signed == Net_GetSign(temp_port.port_net)) {
+					sprintf(port_name, "{%d{%s[%d]}, %s}", padding_length, port_net_name, padding_bit, port_net_name);
+				} else if(net_unsigned == Net_GetSign(temp_port.port_net)) {
+					sprintf(port_name, "{%d{1'b0}, %s", padding_length, port_net_name);
+				}
+			} else {
+				strcpy(port_name, port_net_name);
+			}
+
 			switch(temp_port.type) {
 			case datapath_a:
 				sprintf(temp_port_declaration, ".a(%s)", port_name);
@@ -176,7 +191,7 @@ void TestComponentDeclaration() {
 	net* sel;
 
 	a = Net_Create("a", net_input, net_signed, 8);
-	b = Net_Create("b", net_input, net_signed, 8);
+	b = Net_Create("b", net_input, net_unsigned, 2);
 	sel = Net_Create("sel", net_input, net_unsigned, 1);
 	o = Net_Create("o", net_output, net_signed, 8);
 	comp_o = Net_Create("gt", net_output, net_unsigned, 1);

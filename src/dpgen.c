@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 	SetLogLevel(MESSAGE_LEVEL);
 	LogMessage("dpgen started\r\n\0", MESSAGE_LEVEL);
 
+
 	TestComponentDeclaration();
 
 	CloseLog();
