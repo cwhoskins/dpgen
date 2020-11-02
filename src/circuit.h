@@ -15,6 +15,8 @@ circuit* Circuit_Create();
 net* Circuit_FindNet(circuit* self, char* name);
 component* Circuit_GetComponent(circuit* self, uint8_t idx);
 uint8_t Circuit_GetNumComponent(circuit* self);
+net* Circuit_GetNet(circuit* self, uint8_t idx);
+uint8_t Circuit_GetNumNet(circuit* self);
 void Circuit_AddNet(circuit* self, net* new_net);
 void Circuit_AddComponent(circuit* self, component* new_component);
 void Circuit_CalculateDelay(circuit* self);

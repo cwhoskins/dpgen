@@ -76,6 +76,22 @@ void Circuit_AddNet(circuit* self, net* new_net) {
 	return;
 }
 
+net* Circuit_GetNet(circuit* self, uint8_t idx) {
+	net* ret_value = NULL;
+	if(NULL != self) {
+		if(idx < self->num_nets) ret_value = self->netlist[idx];
+	}
+	return ret_value;
+}
+
+uint8_t Circuit_GetNumNet(circuit* self) {
+	uint8_t ret_value = 0;
+	if(NULL != self) {
+		ret_value = self->num_nets;
+	}
+	return ret_value;
+}
+
 void Circuit_AddComponent(circuit* self, component* new_component) {
 	if(NULL != self && NULL != new_component) {
 		self->component_list[self->num_components] = new_component;

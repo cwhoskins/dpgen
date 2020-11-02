@@ -23,8 +23,9 @@ int main(int argc, char *argv[]) {
 	SetLogLevel(MESSAGE_LEVEL);
 	LogMessage("dpgen started\r\n\0", MESSAGE_LEVEL);
 
-
-	TestComponentDeclaration();
+	circuit* netlist_circuit = Circuit_Create();
+	ReadNetlist("474a_circuit1.txt", netlist_circuit);
+	PrintFile("output.txt", netlist_circuit);
 
 	CloseLog();
 	return EXIT_SUCCESS;

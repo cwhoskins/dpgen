@@ -18,7 +18,7 @@
 static uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit);
 static uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit);
 static uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit);
-static uint8_t BufferNet(net* reg_net, circuit* netlist_circuit);
+static uint8_t BufferNet(net** reg_net, circuit* netlist_circuit);
 
 uint8_t ReadNetlist(char* file_name, circuit* netlist_circuit) {
 
@@ -52,7 +52,7 @@ uint8_t ReadNetlist(char* file_name, circuit* netlist_circuit) {
 
 uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 	//Determine inputs, outputs, and component type
-	net* component_nets[4];
+	net* component_nets[4] = {NULL, NULL, NULL, NULL};
 	component_type type;
 	component* new_component;
 	char* word;
@@ -108,16 +108,17 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 				}
 			}
 		} else {
-			LogMessage("ERROR: Syntax\r\n", ERROR_LEVEL);
-			ret = FAILURE;
-			break;
+//			LogMessage("ERROR: Syntax\r\n", ERROR_LEVEL);
+//			ret = FAILURE;
+//			break;
 		}
 		word = strtok(NULL," ,\r\n");
 		word_idx++;
 	}
 	//Check if output net needs to be buffered with register component
 	if((net_reg == Net_GetType(component_nets[0]) || net_output == Net_GetType(component_nets[0])) && type != load_register) {
-		if(SUCCESS != BufferNet(component_nets[0], netlist_circuit)) {
+		if(SUCCESS != BufferNet(&component_nets[0], netlist_circuit)) {
+			LogMessage("ERROR: Buffering Net\r\n", ERROR_LEVEL);
 			ret = FAILURE;
 		}
 	}
@@ -236,25 +237,26 @@ uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit) {
 	return ret;
 }
 
-uint8_t BufferNet(net* reg_net, circuit* netlist_circuit) {
+uint8_t BufferNet(net** reg_net, circuit* netlist_circuit) {
 
 	uint8_t ret_value = SUCCESS;
 	char new_net_name[64], old_net_name[64];
-	net* buffered_net = reg_net;
+	net* buffered_net = *reg_net;
 	net* unbuffered_net = NULL;
 	component* new_reg;
-	if(NULL != reg_net && NULL != netlist_circuit) {
-		Net_GetName(reg_net, old_net_name);
+	if(NULL != buffered_net && NULL != netlist_circuit) {
+		Net_GetName(buffered_net, old_net_name);
 		strcpy(new_net_name, "reg_in_");
 		strcat(new_net_name, old_net_name);
-		unbuffered_net = Net_Create(new_net_name, net_wire, Net_GetSign(reg_net), Net_GetWidth(reg_net));
+		unbuffered_net = Net_Create(new_net_name, net_wire, Net_GetSign(buffered_net), Net_GetWidth(buffered_net));
 		if(NULL != unbuffered_net) {
 			Circuit_AddNet(netlist_circuit, unbuffered_net);
 			new_reg =  Component_Create(load_register);
 			if(NULL != new_reg) {
 				Component_AddOutputPort(new_reg, buffered_net, datapath_out);
 				Component_AddInputPort(new_reg, unbuffered_net, datapath_a);
-				reg_net = unbuffered_net;
+				Circuit_AddComponent(netlist_circuit, new_reg);
+				*reg_net = unbuffered_net;
 			} else {
 				//Error
 				ret_value = FAILURE;

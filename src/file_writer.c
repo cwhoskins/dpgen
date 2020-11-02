@@ -10,23 +10,45 @@
 
 void PrintFile(char* file_name, circuit* circ) {
 
-//	FILE* fp;
-//	int i = 0;
-//
-//	fp = fopen(file_name, "w+");
-//
-//
+	FILE* fp;
+	uint8_t idx;
+	uint8_t num_components = Circuit_GetNumComponent(circ);
+	uint8_t num_nets = Circuit_GetNumNet(circ);
+	net* temp_net = NULL;
+	component* temp_component = NULL;
+	char line_buffer[512];
+
+	fp = fopen(file_name, "w+");
+
+
 //	fputs("'timescale 1ns/1ps\n", fp);
 //	fprintf(fp, "module %s(Clk, Rst, %s %s)\n", file_name, circ->input_nets, circ->output_nets);
 //	fputs("\tinput Clk, Rst;", fp);
-//
-//	for (i = 0; i < circ->num_nets; i++) {
-//		PrintNet(fp, circ->netlist[i]);
-//	}
+
+	//Declare I/O Nets
+	for (idx = 0; idx < num_nets; idx++) {
+		temp_net = Circuit_GetNet(circ, idx);
+		if(net_input == Net_GetType(temp_net) || net_output == Net_GetType(temp_net)) {
+			DeclareNet(temp_net, line_buffer);
+			fprintf(fp, line_buffer);
+		}
+	}
 	
+	//Declare internal nets
+	for (idx = 0; idx < num_nets; idx++) {
+		temp_net = Circuit_GetNet(circ, idx);
+		if(net_input != Net_GetType(temp_net) && net_output != Net_GetType(temp_net)) {
+			DeclareNet(temp_net, line_buffer);
+			fprintf(fp, line_buffer);
+		}
+	}
 
-
-	return;
+	//Declare Components
+	for (idx = 0; idx < num_components; idx++) {
+		temp_component = Circuit_GetComponent(circ, idx);
+		DeclareComponent(temp_component, line_buffer, idx);
+		fprintf(fp, line_buffer);
+	}
 }
 
 void DeclareNet(net* self, char* line_buffer) {
@@ -178,7 +200,7 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 
 
 	sprintf(component_name, "%s_%d", type_declaration, comp_idx);
-    printf("%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
+    sprintf(line_buffer, "%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
 }
 
 void TestComponentDeclaration() {
