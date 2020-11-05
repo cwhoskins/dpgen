@@ -12,18 +12,39 @@ void PrintFile(char* file_name, circuit* circ) {
 
 	FILE* fp;
 	uint8_t idx;
+	uint8_t inc;
 	uint8_t num_components = Circuit_GetNumComponent(circ);
 	uint8_t num_nets = Circuit_GetNumNet(circ);
+
 	net* temp_net = NULL;
+	net* temp_inc = NULL;
 	component* temp_component = NULL;
 	char line_buffer[512];
+	char in_list[512];
+	char out_list[512];
+	char format[8] = ", ";
 
 	fp = fopen(file_name, "w+");
 
+	// Formatting
+	for (inc = 0; inc < num_nets; inc++) {
+		temp_inc = Circuit_GetNet(circ, inc);
+		if(net_input == Net_GetType(temp_inc)) {
+			strcat(inlist, temp_inc);
+			strcat(inlist, format);
+		}
+		else if (net_output == Net_GetType(temp_inc)) {
+			strcat(out_list, temp_inc);
+			if(inc < (num_nets-1)) {
+				strcat(out_list, format);
+			}
+		}
+	}
 
-//	fputs("'timescale 1ns/1ps\n", fp);
-//	fprintf(fp, "module %s(Clk, Rst, %s %s)\n", file_name, circ->input_nets, circ->output_nets);
-//	fputs("\tinput Clk, Rst;", fp);
+
+	fputs("'timescale 1ns/1ps\n", fp);
+	fprintf(fp, "module %s(Clk, Rst, %s %s)\n", file_name, in_list, out_list);
+	fputs("\tinput Clk, Rst;", fp);
 
 	//Declare I/O Nets
 	for (idx = 0; idx < num_nets; idx++) {
