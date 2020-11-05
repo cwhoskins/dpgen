@@ -29,14 +29,14 @@ uint8_t ReadNetlist(char* file_name, circuit* netlist_circuit) {
 	   uint8_t ret = SUCCESS;
 	   fp = fopen(file_name, "r");
 	   if(NULL == fp) {
-		   printf("Error: File Open\r\n");
+		   printf("Error: File Open\n");
 		   return FAILURE;
 	   }
 
 	   char* fget_rtn = fgets(&buff[0], 250, fp);
 	   while(NULL != fget_rtn) {
 		   //Log info
-		   sprintf(message, "MSG: Parsing Line # %d\r\n", line_number);
+		   sprintf(message, "MSG: Parsing Line # %d\n", line_number);
 		   LogMessage(&message[0], MESSAGE_LEVEL);
 
 		   ret = ParseNetlistLine(&buff[0], netlist_circuit);
@@ -60,7 +60,7 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 	uint8_t net_idx = 0;
 	uint8_t ret = SUCCESS;
 	port_type output_type = datapath_out;
-	LogMessage("MSG: Parsing Variable Assignment\r\n", MESSAGE_LEVEL);
+	LogMessage("MSG: Parsing Variable Assignment\n", MESSAGE_LEVEL);
 
 	while(NULL != word) {
 		if(1 == word_idx || 3 == word_idx || 5 == word_idx || 7 == word_idx) { //output variable
@@ -73,12 +73,12 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 					} else if(subtractor == type) {
 						type = decrementer;
 					} else {
-						LogMessage("ERROR: Unknown Component\r\n", ERROR_LEVEL);
+						LogMessage("ERROR: Unknown Component\n", ERROR_LEVEL);
 						ret = FAILURE;
 						break;
 					}
 				} else {
-					LogMessage("ERROR: Undeclared variable used\r\n", ERROR_LEVEL);
+					LogMessage("ERROR: Undeclared variable used\n", ERROR_LEVEL);
 					ret = FAILURE;
 					break;
 				}
@@ -86,7 +86,7 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 			net_idx++;
 		} else if(2 == word_idx) { //= sign
 			if(0 != strcmp(word, "=")) {
-				LogMessage("ERROR: Syntax - Assignment\r\n", ERROR_LEVEL);
+				LogMessage("ERROR: Syntax - Assignment\n", ERROR_LEVEL);
 				ret = FAILURE;
 				break;
 			} else {
@@ -95,7 +95,7 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 		} else if(4 == word_idx) {
 			type = ReadComponentType(word);
 			if(component_unknown == type) {
-				LogMessage("ERROR: Unknown Component\r\n", ERROR_LEVEL);
+				LogMessage("ERROR: Unknown Component\n", ERROR_LEVEL);
 				ret = FAILURE;
 				break;
 			} else if(comparator == type) {
@@ -107,10 +107,16 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 					output_type = greater_than_out;
 				}
 			}
+		} else if(6 == word_idx) {
+			if(0 != strcmp(":", word)) {
+				LogMessage("ERROR: Mux Syntax\n", ERROR_LEVEL);
+				ret = FAILURE;
+				break;
+			}
 		} else {
-//			LogMessage("ERROR: Syntax\r\n", ERROR_LEVEL);
-//			ret = FAILURE;
-//			break;
+			LogMessage("ERROR: Syntax\n", ERROR_LEVEL);
+			ret = FAILURE;
+			break;
 		}
 		word = strtok(NULL," ,\r\n");
 		word_idx++;
@@ -133,6 +139,7 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 		switch(type) {
 		case mux2x1:
 			control_type = mux_sel;
+			output_type = reg_out;
 			input_b_idx = 3;
 			input_a_idx = 2;
 			input_ctrl_idx = 1;
@@ -143,10 +150,24 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 		case shift_right:
 			control_type = shift_amount;
 			break;
+		case adder:
+			output_type = sum_out;
+			break;
+		case subtractor:
+			output_type = diff_out;
+			break;
+		case multiplier:
+			output_type = prod_out;
+			break;
+		case divider:
+			output_type = quot_out;
+			break;
+		case modulo:
+			output_type = rem_out;
+			break;
 		default:
 			break;
 		}
-
 		Component_AddInputPort(new_component, component_nets[input_a_idx], datapath_a);
 		Component_AddInputPort(new_component, component_nets[input_b_idx], datapath_b);
 		if(port_error != control_type) Component_AddInputPort(new_component, component_nets[input_ctrl_idx], control_type);
@@ -167,12 +188,12 @@ uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit) {
 	net* new_net;
 	uint8_t ret = SUCCESS;
 
-	LogMessage("MSG: Parsing Net Declaration\r\n", MESSAGE_LEVEL);
+	LogMessage("MSG: Parsing Net Declaration\n", MESSAGE_LEVEL);
 
 	//Get Declaration Type (i.e. reg, wire, input, output)
 	declare_type = ReadNetType(first_word);
 	if(net_error == declare_type) {
-		LogMessage("ERROR: Unknown Net Type\r\n", ERROR_LEVEL);
+		LogMessage("ERROR: Unknown Net Type\n", ERROR_LEVEL);
 		return FAILURE;
 	}
 
@@ -183,7 +204,7 @@ uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit) {
 	//Determine Declaration Width
 	declare_width = ReadNetWidth(word);
 	if(0 == declare_width) {
-		LogMessage("ERROR: Unknown Net Width\r\n", ERROR_LEVEL);
+		LogMessage("ERROR: Unknown Net Width\n", ERROR_LEVEL);
 		return FAILURE;
 	}
 
@@ -192,7 +213,7 @@ uint8_t ParseDeclarationLine(char* first_word, circuit* netlist_circuit) {
 	while(NULL != word) {
 		if(VARIABLE != CheckWordType(word)) break;
 		if(NULL != Circuit_FindNet(netlist_circuit, word)) { //Declared Variable already exists
-			LogMessage("ERROR: Variable redefined\r\n", ERROR_LEVEL);
+			LogMessage("ERROR: Variable redefined\n", ERROR_LEVEL);
 			ret = FAILURE;
 			break;
 		}
@@ -219,6 +240,7 @@ uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit) {
 		   if(NULL != Circuit_FindNet(netlist_circuit, word)) {
 			   ret = ParseAssignmentLine(line, netlist_circuit);
 		   } else {
+			   LogMessage("ERROR: Undeclared variable used\n", ERROR_LEVEL);
 			   ret = FAILURE;
 		   }
 		   break;
@@ -226,10 +248,10 @@ uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit) {
 		   ret = ParseDeclarationLine(line, netlist_circuit);
 		   break;
 	   case COMMENT_DECLARATION:
-		   LogMessage("MSG: Line Ignored - Comment\r\n", MESSAGE_LEVEL);
+		   LogMessage("MSG: Line Ignored - Comment\n", MESSAGE_LEVEL);
 		   break;
 	   default://Error
-		   LogMessage("ERROR: Unknown Line\r\n", ERROR_LEVEL);
+		   LogMessage("ERROR: Unknown Line\n", ERROR_LEVEL);
 		   ret = FAILURE;
 		   break;
 	   }

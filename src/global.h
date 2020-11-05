@@ -21,6 +21,8 @@
 #define FALSE 0
 #define TRUE 1
 
+#define DEBUG_MODE 1
+
 //Net
 typedef enum enum_net_type {
 	net_wire=0,
@@ -64,6 +66,12 @@ typedef enum {
 	greater_than_out,
 	less_than_out,
 	equal_out,
+	reg_out,
+	sum_out,
+	diff_out,
+	prod_out,
+	quot_out,
+	rem_out,
 	port_error
 } port_type;
 

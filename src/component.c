@@ -29,15 +29,18 @@ typedef struct struct_component {
 } component;
 
 component* Component_Create(component_type type) {
-	component* new_component = (component*) malloc(sizeof(component));
-	if(NULL != new_component) {
-		if(component_unknown != type) {
-			new_component->type = type;
-			new_component->width = 0;
-			new_component->delay_ns = 0.0f;
-			new_component->sign = net_unsigned;
-			new_component->num_inputs = 0;
-			new_component->num_outputs = 0;
+	component* new_component = NULL;
+	if(component_unknown != type) {
+		new_component = (component*) malloc(sizeof(component));
+		if(NULL != new_component) {
+			if(component_unknown != type) {
+				new_component->type = type;
+				new_component->width = 0;
+				new_component->delay_ns = 0.0f;
+				new_component->sign = net_unsigned;
+				new_component->num_inputs = 0;
+				new_component->num_outputs = 0;
+			}
 		}
 	}
 	return new_component;
@@ -46,12 +49,19 @@ component* Component_Create(component_type type) {
 void Component_UpdatePathDelay(component* self, float path_delay_ns) {
 	uint8_t output_idx;
 	float new_delay_ns;
-	if(load_register == self->type) {
-		new_delay_ns = self->delay_ns;
-	} else {
-		new_delay_ns = path_delay_ns + self->delay_ns;
-	}
+	char log_msg[128];
 	if(NULL != self) {
+		Component_UpdateDelay(self);
+
+		if(load_register == self->type) {
+			new_delay_ns = self->delay_ns;
+		} else {
+			new_delay_ns = path_delay_ns + self->delay_ns;
+		}
+
+		sprintf(log_msg, "MSG: Updating downstream path delay to %.2f ns\n", new_delay_ns);
+		LogMessage(log_msg, MESSAGE_LEVEL);
+
 		for(output_idx = 0; output_idx < self->num_outputs; output_idx++) {
 			Net_UpdatePathDelay(self->output_ports[output_idx].port_net, new_delay_ns);
 		}
@@ -91,11 +101,6 @@ uint8_t Component_AddOutputPort(component* self, net* output, port_type type) {
 			self->output_ports[self->num_outputs].type = type;
 			self->num_outputs++;
 			Net_AddDriver(output, self);
-			if(datapath_out == type) {
-				if(net_signed == Net_GetSign(output)) {
-					self->sign = net_signed;
-				}
-			}
 			if(self->type != comparator) {
 				self->width = Net_GetWidth(output);
 
@@ -149,6 +154,7 @@ uint8_t Component_GetNumOutputs(component* self) {
 void Component_UpdateDelay(component* self) {
 	uint8_t width_idx;
 	if(NULL != self) {
+		char log_msg[64];
 		switch(self->width) {
 		case 1:
 			width_idx = 0;
@@ -213,6 +219,8 @@ void Component_UpdateDelay(component* self) {
 		default:
 			break;
 		}
+		sprintf(log_msg, "MSG: Component Delay set to %.2f ns\n", self->delay_ns);
+		LogMessage(log_msg, MESSAGE_LEVEL);
 	}
 }
 
@@ -230,6 +238,14 @@ uint8_t Component_GetWidth(component* self) {
 		width = self->width;
 	}
 	return width;
+}
+
+net_sign Component_GetSign(component* self) {
+	net_sign ret_value = net_error;
+	if(NULL != self) {
+		ret_value = self->sign;
+	}
+	return ret_value;
 }
 
 void Component_Destroy(component* self) {

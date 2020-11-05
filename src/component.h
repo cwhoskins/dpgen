@@ -29,6 +29,7 @@ uint8_t Component_GetNumInputs(component* self);
 uint8_t Component_GetNumOutputs(component* self);
 port Component_GetInputPort(component* self, uint8_t idx);
 port Component_GetOutputPort(component* self, uint8_t idx);
+net_sign Component_GetSign(component* self);
 
 void Component_Destroy(component* self);
 

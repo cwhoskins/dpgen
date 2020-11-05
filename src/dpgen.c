@@ -20,6 +20,48 @@
 
 int main(int argc, char *argv[]) {
 
+#if DEBUG_MODE == 1
+
+	SetLogFile("dpgen_log.txt");
+	SetLogLevel(MESSAGE_LEVEL);
+	LogMessage("dpgen started - DEBUG\n", MESSAGE_LEVEL);
+
+	uint8_t num_tests = 16;
+	uint8_t idx;
+	circuit* netlist_circuit = NULL;
+	char output_file[64];
+	char input_file[64];
+	char log_msg[128];
+	float delay;
+
+	for(idx = 0; idx < num_tests; idx++) {
+		sprintf(log_msg, "\nMSG: Testing Circuit #%d\n", idx);
+		LogMessage(log_msg, MESSAGE_LEVEL);
+		sprintf(input_file, "./circuits/%d.txt", (idx+1));
+		sprintf(output_file, "./outputs/%d.txt", (idx+1));
+
+		netlist_circuit = Circuit_Create();
+		if(NULL == netlist_circuit) {
+			LogMessage("ERROR: Failure to create circuit object\n", ERROR_LEVEL);
+			return FAILURE;
+		}
+		if(SUCCESS == ReadNetlist(input_file, netlist_circuit)) {
+			Circuit_CalculateDelay(netlist_circuit);
+			delay = Circuit_GetCriticalPath(netlist_circuit);
+			printf("Critical path #%d: %0.3f ns\n", (idx+1), delay);
+			PrintFile(output_file, netlist_circuit);
+		} else {
+			LogMessage("ERROR: Could not parse input\n", ERROR_LEVEL);
+		}
+
+		Circuit_Destroy(netlist_circuit);
+	}
+
+	CloseLog();
+
+	return SUCCESS;
+
+#else
 	char txt_file[64];
 	char verilog_file[64];
 	float delay = 0.0;
@@ -53,6 +95,6 @@ int main(int argc, char *argv[]) {
 
 	CloseLog();
 	return EXIT_SUCCESS;
-
+#endif
 	
 }

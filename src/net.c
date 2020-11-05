@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "net.h"
 #include "component.h"
-
+#include "logger.h"
 
 typedef struct struct_net {
 	net_type type;
@@ -48,6 +48,9 @@ net* Net_Create(char* name, net_type type, net_sign sign, uint8_t width) {
 
 void Net_ResetDelay(net* self) {
 	if(NULL != self) {
+		char log_msg[256];
+		sprintf(log_msg,"MSG: Net %s Delay Reset\n", self->name);
+		LogMessage(log_msg, MESSAGE_LEVEL);
 		self->delay_ns = -1.0f;
 	}
 }
@@ -56,6 +59,11 @@ void Net_UpdatePathDelay(net* self, float path_delay_ns) {
 	uint8_t idx;
 	if(NULL != self) {
 		if(path_delay_ns > self->delay_ns) {
+
+			char log_msg[256];
+			sprintf(log_msg,"MSG: Net %s delay set to %.2f ns\n", self->name, path_delay_ns);
+			LogMessage(log_msg, MESSAGE_LEVEL);
+
 			self->delay_ns = path_delay_ns;
 			for(idx = 0; idx < self->num_receivers;idx++) {
 				Component_UpdatePathDelay(self->receivers[idx], path_delay_ns);

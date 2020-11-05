@@ -12,34 +12,35 @@ void PrintFile(char* file_name, circuit* circ) {
 
 	FILE* fp;
 	uint8_t idx;
-	uint8_t inc;
 	uint8_t num_components = Circuit_GetNumComponent(circ);
 	uint8_t num_nets = Circuit_GetNumNet(circ);
 
 	net* temp_net = NULL;
-	net* temp_inc = NULL;
 	component* temp_component = NULL;
 	char line_buffer[512];
 	char in_list[512];
 	char out_list[512];
-	char format[8] = ", ";
+
 
 	fp = fopen(file_name, "w+");
 
 	// Formatting
-	for (inc = 0; inc < num_nets; inc++) {
-		temp_inc = Circuit_GetNet(circ, inc);
-		if(net_input == Net_GetType(temp_inc)) {
-			strcat(inlist, temp_inc);
-			strcat(inlist, format);
-		}
-		else if (net_output == Net_GetType(temp_inc)) {
-			strcat(out_list, temp_inc);
-			if(inc < (num_nets-1)) {
-				strcat(out_list, format);
-			}
-		}
-	}
+//	char format[8] = ", ";
+//	net* temp_inc = NULL;
+//	uint8_t inc;
+//	for (inc = 0; inc < num_nets; inc++) {
+//		temp_inc = Circuit_GetNet(circ, inc);
+//		if(net_input == Net_GetType(temp_inc)) {
+//			strcat(in_list, temp_inc);
+//			strcat(in_list, format);
+//		}
+//		else if (net_output == Net_GetType(temp_inc)) {
+//			strcat(out_list, temp_inc);
+//			if(inc < (num_nets-1)) {
+//				strcat(out_list, format);
+//			}
+//		}
+//	}
 
 
 	fputs("'timescale 1ns/1ps\n", fp);
@@ -70,6 +71,8 @@ void PrintFile(char* file_name, circuit* circ) {
 		DeclareComponent(temp_component, line_buffer, idx);
 		fprintf(fp, line_buffer);
 	}
+
+	fclose(fp);
 }
 
 void DeclareNet(net* self, char* line_buffer) {
@@ -104,6 +107,7 @@ void DeclareNet(net* self, char* line_buffer) {
 
 void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 	component_type type;
+	net_sign component_sign;
 	uint8_t width, padding_length, padding_bit;
 	uint8_t io_idx, num_ports;
 	port temp_port;
@@ -115,6 +119,11 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 	char port_name[64];
 
 	if(NULL != self) {
+
+		width = Component_GetWidth(self);
+		component_sign = Component_GetSign(self);
+		type = Component_GetType(self);
+
 		num_ports = Component_GetNumOutputs(self) + Component_GetNumInputs(self);
 		for(io_idx = 0; io_idx < num_ports; io_idx++) {
 
@@ -141,13 +150,17 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 
 			switch(temp_port.type) {
 			case datapath_a:
-				sprintf(temp_port_declaration, ".a(%s)", port_name);
+				if(load_register == type) {
+					sprintf(temp_port_declaration, ".d(%s)", port_name);
+				} else {
+					sprintf(temp_port_declaration, ".a(%s)", port_name);
+				}
 				break;
 			case datapath_b:
 				sprintf(temp_port_declaration, ".b(%s)", port_name);
 				break;
 			case datapath_out:
-				sprintf(temp_port_declaration, ".o(%s)", port_name);
+				sprintf(temp_port_declaration, ".d(%s)", port_name);
 				break;
 			case mux_sel:
 				sprintf(temp_port_declaration, ".sel(%s)", port_name);
@@ -164,6 +177,24 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 			case equal_out:
 				sprintf(temp_port_declaration, ".eq(%s)", port_name);
 				break;
+			case reg_out:
+				sprintf(temp_port_declaration, ".q(%s)", port_name);
+				break;
+			case sum_out:
+				sprintf(temp_port_declaration, ".sum(%s)", port_name);
+				break;
+			case diff_out:
+				sprintf(temp_port_declaration, ".diff(%s)", port_name);
+				break;
+			case prod_out:
+				sprintf(temp_port_declaration, ".prod(%s)", port_name);
+				break;
+			case quot_out:
+				sprintf(temp_port_declaration, ".quot(%s)", port_name);
+				break;
+			case rem_out:
+				sprintf(temp_port_declaration, ".rem(%s)", port_name);
+				break;
 			default:
 				break;
 			}
@@ -172,10 +203,6 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 				strcat(port_declaration, ", ");
 			}
 		}
-
-		width = Component_GetWidth(self);
-
-		type = Component_GetType(self);
 
 		switch(type) {
 		case load_register:
@@ -219,9 +246,14 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 		}
 	}
 
-
 	sprintf(component_name, "%s_%d", type_declaration, comp_idx);
-    sprintf(line_buffer, "%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
+
+	if(net_signed == component_sign) {
+		sprintf(line_buffer, "S%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
+	} else {
+		sprintf(line_buffer, "%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
+	}
+
 }
 
 void TestComponentDeclaration() {
