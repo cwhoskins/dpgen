@@ -139,10 +139,12 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 		switch(type) {
 		case mux2x1:
 			control_type = mux_sel;
-			output_type = reg_out;
 			input_b_idx = 3;
 			input_a_idx = 2;
 			input_ctrl_idx = 1;
+			break;
+		case load_register:
+			output_type = reg_out;
 			break;
 		case shift_left:
 			control_type = shift_amount;
