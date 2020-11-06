@@ -78,7 +78,9 @@ uint8_t Component_AddInputPort(component* self, net* input, port_type type) {
 			Net_AddReceiver(input, self);
 			if(datapath_a == type || datapath_b == type) {
 				if(net_signed == Net_GetSign(input)) {
-					self->sign = net_signed;
+					if(self->type != load_register && self->type != mux2x1 && self->type != shift_left && self->type != shift_right) {
+						self->sign = net_signed;
+					}
 				}
 			}
 			if(Net_GetWidth(input) > self->width && comparator == self->type) {

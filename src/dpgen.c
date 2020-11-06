@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	float delay;
 
 	for(idx = 0; idx < num_tests; idx++) {
-		sprintf(log_msg, "\nMSG: Testing Circuit #%d\n", idx);
+		sprintf(log_msg, "\nMSG: Testing Circuit #%d\n", (idx+1));
 		LogMessage(log_msg, MESSAGE_LEVEL);
 		sprintf(input_file, "./circuits/%d.txt", (idx+1));
 		sprintf(output_file, "./outputs/%d.txt", (idx+1));

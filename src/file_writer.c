@@ -2,6 +2,7 @@
 #include "circuit.h"
 #include "net.h"
 #include "component.h"
+#include "logger.h"
 #include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -10,73 +11,89 @@
 
 void PrintFile(char* file_name, circuit* circ) {
 
+	if(NULL == file_name || NULL == circ) return;
+
 	FILE* fp;
 	uint8_t idx;
 	uint8_t num_components = Circuit_GetNumComponent(circ);
 	uint8_t num_nets = Circuit_GetNumNet(circ);
+	int print_return;
+	char log_msg[128];
 
 	net* temp_net = NULL;
 	component* temp_component = NULL;
 	char line_buffer[512];
-	char in_list[512];
-	char out_list[512];
 
+	LogMessage("MSG: Writing Circuit to file\n", MESSAGE_LEVEL);
 
 	fp = fopen(file_name, "w+");
+	if(NULL == fp) {
+		LogMessage("Error: Cannot open output file\n", ERROR_LEVEL);
+		return;
+	}
 
-	// Formatting
-//	char format[8] = ", ";
-//	net* temp_inc = NULL;
-//	uint8_t inc;
-//	for (inc = 0; inc < num_nets; inc++) {
-//		temp_inc = Circuit_GetNet(circ, inc);
-//		if(net_input == Net_GetType(temp_inc)) {
-//			strcat(in_list, temp_inc);
-//			strcat(in_list, format);
-//		}
-//		else if (net_output == Net_GetType(temp_inc)) {
-//			strcat(out_list, temp_inc);
-//			if(inc < (num_nets-1)) {
-//				strcat(out_list, format);
-//			}
-//		}
-//	}
-
-
-	fputs("'timescale 1ns/1ps\n", fp);
-	fprintf(fp, "module %s(Clk, Rst, %s %s)\n", file_name, in_list, out_list);
-	fputs("\tinput Clk, Rst;", fp);
+//	fputs("'timescale 1ns/1ps\n", fp);
+//	fprintf(fp, "module %s(Clk, Rst, %s %s)\n", file_name, in_list, out_list);
+//	fputs("\tinput Clk, Rst;", fp);
 
 	//Declare I/O Nets
+	LogMessage("MSG: Writing I/O\n", MESSAGE_LEVEL);
 	for (idx = 0; idx < num_nets; idx++) {
 		temp_net = Circuit_GetNet(circ, idx);
-		if(net_input == Net_GetType(temp_net) || net_output == Net_GetType(temp_net)) {
+		if(NULL == temp_net) {
+			LogMessage("Error: Could not retrieve net\n", ERROR_LEVEL);
+			break;
+		} else if(net_input == Net_GetType(temp_net) || net_output == Net_GetType(temp_net)) {
 			DeclareNet(temp_net, line_buffer);
-			fprintf(fp, line_buffer);
+			print_return = fprintf(fp, line_buffer);
+			if(0 >= print_return) {
+				sprintf(log_msg, "Error: Could not print to file - %d\n", print_return);
+				LogMessage(log_msg, ERROR_LEVEL);
+				break;
+			}
 		}
 	}
 	
 	//Declare internal nets
+	LogMessage("MSG: Writing internal nets\n", MESSAGE_LEVEL);
 	for (idx = 0; idx < num_nets; idx++) {
 		temp_net = Circuit_GetNet(circ, idx);
-		if(net_input != Net_GetType(temp_net) && net_output != Net_GetType(temp_net)) {
+		if(NULL == temp_net) {
+			LogMessage("Error: Could not retrieve net\n", ERROR_LEVEL);
+			break;
+		} else if(net_input != Net_GetType(temp_net) && net_output != Net_GetType(temp_net)) {
 			DeclareNet(temp_net, line_buffer);
-			fprintf(fp, line_buffer);
+			print_return = fprintf(fp, line_buffer);
+			if(0 >= print_return) {
+				sprintf(log_msg, "Error: Could not print to file - %d\n", print_return);
+				LogMessage(log_msg, ERROR_LEVEL);
+				break;
+			}
 		}
 	}
 
 	//Declare Components
+	LogMessage("MSG: Instantiating datapath components\n", MESSAGE_LEVEL);
 	for (idx = 0; idx < num_components; idx++) {
 		temp_component = Circuit_GetComponent(circ, idx);
+		if(NULL == temp_component) {
+			LogMessage("Error: Could not retrieve component\n", ERROR_LEVEL);
+			break;
+		}
 		DeclareComponent(temp_component, line_buffer, idx);
-		fprintf(fp, line_buffer);
+		print_return = fprintf(fp, line_buffer);
+		if(0 >= print_return) {
+			sprintf(log_msg, "Error: Could not print to file - %d\n", print_return);
+			LogMessage(log_msg, ERROR_LEVEL);
+			break;
+		}
 	}
 
 	fclose(fp);
 }
 
 void DeclareNet(net* self, char* line_buffer) {
-
+	if(NULL == self || NULL == line_buffer) return;
 	net_type type = Net_GetType(self);
 	uint8_t net_width = Net_GetWidth(self);
 	char net_type_keyword[16];
@@ -106,6 +123,8 @@ void DeclareNet(net* self, char* line_buffer) {
 }
 
 void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
+	if(NULL == self || NULL == line_buffer) return;
+
 	component_type type;
 	net_sign component_sign;
 	uint8_t width, padding_length, padding_bit;
@@ -257,6 +276,7 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 }
 
 void TestComponentDeclaration() {
+	char comp_line[1024];
 	component_type uut_type;
 	component* uut;
 	net* a;
@@ -276,27 +296,27 @@ void TestComponentDeclaration() {
 		Component_AddInputPort(uut, a, datapath_a);
 		switch(uut_type) {
 		case load_register:
-			Component_AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, reg_out);
 			break;
 		case adder:
 			Component_AddInputPort(uut, b, datapath_b);
-			Component_AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, sum_out);
 			break;
 		case subtractor:
 			Component_AddInputPort(uut, b, datapath_b);
-			Component_AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, diff_out);
 			break;
 		case multiplier:
 			Component_AddInputPort(uut, b, datapath_b);
-			Component_AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, prod_out);
 			break;
 		case divider:
 			Component_AddInputPort(uut, b, datapath_b);
-			Component_AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, quot_out);
 			break;
 		case modulo:
 			Component_AddInputPort(uut, b, datapath_b);
-			Component_AddOutputPort(uut, o, datapath_out);
+			Component_AddOutputPort(uut, o, rem_out);
 			break;
 		case mux2x1:
 			Component_AddInputPort(uut, b, datapath_b);
@@ -324,7 +344,8 @@ void TestComponentDeclaration() {
 		default:
 			break;
 		}
-		DeclareComponent(uut, NULL, comp_idx);
+		DeclareComponent(uut, comp_line, comp_idx);
+		printf(comp_line);
 		Component_Destroy(uut);
 		comp_idx++;
 	}

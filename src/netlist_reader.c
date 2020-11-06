@@ -55,17 +55,19 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 	net* component_nets[4] = {NULL, NULL, NULL, NULL};
 	component_type type;
 	component* new_component;
-	char* word;
+	char* word = first_word;
 	uint8_t word_idx = 1;
 	uint8_t net_idx = 0;
 	uint8_t ret = SUCCESS;
 	port_type output_type = datapath_out;
 	LogMessage("MSG: Parsing Variable Assignment\n", MESSAGE_LEVEL);
-
 	while(NULL != word) {
 		if(1 == word_idx || 3 == word_idx || 5 == word_idx || 7 == word_idx) { //output variable
-			if(1 == word_idx) component_nets[net_idx] = Circuit_FindNet(netlist_circuit, first_word);
-			else component_nets[net_idx] = Circuit_FindNet(netlist_circuit, word);
+			if(1 == word_idx) {
+				component_nets[net_idx] = Circuit_FindNet(netlist_circuit, first_word);
+			} else {
+				component_nets[net_idx] = Circuit_FindNet(netlist_circuit, word);
+			}
 			if(NULL == component_nets[net_idx]) {
 				if(5 == word_idx && 0 == strcmp(word, "1")) {
 					if(adder == type) {
@@ -99,6 +101,7 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 				ret = FAILURE;
 				break;
 			} else if(comparator == type) {
+				LogMessage("MSG: Component is comparator\n", MESSAGE_LEVEL);
 				if(0 == strcmp("<", word)) {
 					output_type = less_than_out;
 				} else if(0 == strcmp("==", word)) {
@@ -112,6 +115,8 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 				LogMessage("ERROR: Mux Syntax\n", ERROR_LEVEL);
 				ret = FAILURE;
 				break;
+			} else {
+				LogMessage("MSG: Component is mux\n", MESSAGE_LEVEL);
 			}
 		} else {
 			LogMessage("ERROR: Syntax\n", ERROR_LEVEL);
@@ -144,27 +149,35 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 			input_ctrl_idx = 1;
 			break;
 		case load_register:
+			LogMessage("MSG: Component is register\n", MESSAGE_LEVEL);
 			output_type = reg_out;
 			break;
 		case shift_left:
+			LogMessage("MSG: Component is SHL\n", MESSAGE_LEVEL);
 			control_type = shift_amount;
 			break;
 		case shift_right:
+			LogMessage("MSG: Component is SHR\n", MESSAGE_LEVEL);
 			control_type = shift_amount;
 			break;
 		case adder:
+			LogMessage("MSG: Component is +\n", MESSAGE_LEVEL);
 			output_type = sum_out;
 			break;
 		case subtractor:
+			LogMessage("MSG: Component is -\n", MESSAGE_LEVEL);
 			output_type = diff_out;
 			break;
 		case multiplier:
+			LogMessage("MSG: Component is *\n", MESSAGE_LEVEL);
 			output_type = prod_out;
 			break;
 		case divider:
+			LogMessage("MSG: Component is divider\n", MESSAGE_LEVEL);
 			output_type = quot_out;
 			break;
 		case modulo:
+			LogMessage("MSG: Component is modulo\n", MESSAGE_LEVEL);
 			output_type = rem_out;
 			break;
 		default:
@@ -176,6 +189,7 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 		Component_AddOutputPort(new_component, component_nets[output_idx], output_type);
 		Circuit_AddComponent(netlist_circuit, new_component);
 	} else {
+		LogMessage("ERROR: Component could not be created\n", ERROR_LEVEL);
 		ret = FAILURE;
 	}
 	return ret;
