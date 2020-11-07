@@ -17,12 +17,22 @@ void PrintFile(char* file_name, circuit* circ) {
 	uint8_t idx;
 	uint8_t num_components = Circuit_GetNumComponent(circ);
 	uint8_t num_nets = Circuit_GetNumNet(circ);
+	uint8_t num_inputs = 0;
+	uint8_t num_outputs = 0;
+	uint8_t num_others = 0;
 	int print_return;
 	char log_msg[128];
 
 	net* temp_net = NULL;
 	component* temp_component = NULL;
 	char line_buffer[512];
+
+	char in_list[246];
+	char out_list[246];
+	char output_name[64];
+	char format[] = ", ";
+	net* list_temp = NULL;
+	char net_name[64];
 
 	LogMessage("MSG: Writing Circuit to file\n", MESSAGE_LEVEL);
 
@@ -32,9 +42,45 @@ void PrintFile(char* file_name, circuit* circ) {
 		return;
 	}
 
-//	fputs("'timescale 1ns/1ps\n", fp);
-//	fprintf(fp, "module %s(Clk, Rst, %s %s)\n", file_name, in_list, out_list);
-//	fputs("\tinput Clk, Rst;", fp);
+	for (idx = 0; idx < num_nets; idx++) {
+		list_temp = Circuit_GetNet(circ, idx);
+		if(net_input == Net_GetType(list_temp)) {
+			Net_GetName(list_temp, net_name);
+			strcat(net_name, format);
+			strcat(in_list, net_name);
+			num_inputs++;
+		}
+		else if((net_wire == Net_GetType(list_temp)) || (net_reg == Net_GetType(list_temp))) {
+			num_others++;
+		}
+	}
+
+	num_outputs = num_nets - num_inputs - num_others;
+
+	for(idx = 0; idx < num_nets; idx++) {
+		list_temp = Circuit_GetNet(circ, idx);
+		if(net_output == Net_GetType(list_temp)) {
+			Net_GetName(list_temp, net_name);
+			if(idx <= (num_outputs-1)) {
+				strcat(net_name, format);
+			}
+			strcat(out_list, net_name);
+		}
+	}
+
+	for(idx = 0; idx < strlen(file_name); idx++) {
+		if(file_name[idx] != '.') {
+			output_name[idx] = file_name[idx];
+		}
+		else {
+			break;
+		}
+	}
+
+
+	fputs("'timescale 1ns/1ps\n", fp);
+	fprintf(fp, "module %s(Clk, Rst, %s%s);\n", output_name, in_list, out_list);
+	fputs("\tinput Clk, Rst;", fp);
 
 	//Declare I/O Nets
 	LogMessage("MSG: Writing I/O\n", MESSAGE_LEVEL);
@@ -72,6 +118,8 @@ void PrintFile(char* file_name, circuit* circ) {
 		}
 	}
 
+	fputs("\n", fp);
+
 	//Declare Components
 	LogMessage("MSG: Instantiating datapath components\n", MESSAGE_LEVEL);
 	for (idx = 0; idx < num_components; idx++) {
@@ -88,6 +136,8 @@ void PrintFile(char* file_name, circuit* circ) {
 			break;
 		}
 	}
+	fputs("\n", fp);
+	fputs("endmodule\n", fp);
 
 	fclose(fp);
 }
@@ -268,9 +318,9 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 	sprintf(component_name, "%s_%d", type_declaration, comp_idx);
 
 	if(net_signed == component_sign) {
-		sprintf(line_buffer, "S%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
+		sprintf(line_buffer, "\tS%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
 	} else {
-		sprintf(line_buffer, "%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
+		sprintf(line_buffer, "\t%s #(.DATA_WIDTH(%d)) %s (%s);\n", type_declaration, width, component_name, port_declaration);
 	}
 
 }

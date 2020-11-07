@@ -21,7 +21,7 @@
 #define FALSE 0
 #define TRUE 1
 
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 
 //Net
 typedef enum enum_net_type {

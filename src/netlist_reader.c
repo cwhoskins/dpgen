@@ -22,6 +22,7 @@ static uint8_t BufferNet(net** reg_net, circuit* netlist_circuit);
 
 uint8_t ReadNetlist(char* file_name, circuit* netlist_circuit) {
 
+
 	   FILE* fp;
 	   char buff[255];
 	   char message[32];

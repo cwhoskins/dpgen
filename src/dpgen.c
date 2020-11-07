@@ -62,21 +62,21 @@ int main(int argc, char *argv[]) {
 	return SUCCESS;
 
 #else
-	char txt_file[64];
-	char verilog_file[64];
-	float delay = 0.0;
+	char* txt_file = NULL;
+	char* verilog_file = NULL;
+	float delay = -1;
 
 	if(argc < 3) {
 		printf("ERROR: Not enough arguments.\n");
-		return EXIT_FAILURE;
+		return FAILURE;
 	}
 	else if (argc > 3) {
 		printf("ERROR: Too many arguments.\n");
-		return EXIT_FAILURE;
+		return FAILURE;
 	}
 	else {
-		strcpy(txt_file, argv[1]);
-		strcpy(verilog_file, argv[2]);
+		txt_file = argv[1];
+		verilog_file = argv[2];
 	}
 
 
@@ -85,13 +85,12 @@ int main(int argc, char *argv[]) {
 	LogMessage("dpgen started\r\n\0", MESSAGE_LEVEL);
 
 	circuit* netlist_circuit = Circuit_Create();
-	ReadNetlist("474a_circuit1.txt", netlist_circuit);
-	//ReadNetlist(txt_file, netlist_circuit);
-	PrintFile("output.txt", netlist_circuit);
-	//PrintFile(verilog_file, netlist_circuit);
+	ReadNetlist(txt_file, netlist_circuit);
+	PrintFile(verilog_file, netlist_circuit);
 
+	Circuit_CalculateDelay(netlist_circuit);
 	delay = Circuit_GetCriticalPath(netlist_circuit);
-	printf("Critical path: %0.3f ns", delay);
+	printf("Critical path: %0.3f ns\n", delay);
 
 	CloseLog();
 	return EXIT_SUCCESS;
