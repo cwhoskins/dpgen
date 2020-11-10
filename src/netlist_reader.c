@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 static uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit);
@@ -100,7 +101,6 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 			if(component_unknown == type) {
 				LogMessage("ERROR: Unknown Component\n", ERROR_LEVEL);
 				ret = FAILURE;
-				break;
 			} else if(comparator == type) {
 				LogMessage("MSG: Component is comparator\n", MESSAGE_LEVEL);
 				if(0 == strcmp("<", word)) {

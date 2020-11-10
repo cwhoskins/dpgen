@@ -34,6 +34,7 @@ void PrintFile(char* file_name, circuit* circ) {
 	net* list_temp = NULL;
 	char net_name[64];
 
+
 	LogMessage("MSG: Writing Circuit to file\n", MESSAGE_LEVEL);
 
 	fp = fopen(file_name, "w+");
@@ -50,7 +51,7 @@ void PrintFile(char* file_name, circuit* circ) {
 			strcat(in_list, net_name);
 			num_inputs++;
 		}
-		else if((net_wire == Net_GetType(list_temp)) || (net_reg == Net_GetType(list_temp))) {
+		else if(net_wire == Net_GetType(list_temp) || net_reg == Net_GetType(list_temp)) {
 			num_others++;
 		}
 	}
@@ -61,8 +62,9 @@ void PrintFile(char* file_name, circuit* circ) {
 		list_temp = Circuit_GetNet(circ, idx);
 		if(net_output == Net_GetType(list_temp)) {
 			Net_GetName(list_temp, net_name);
-			if(idx <= (num_outputs-1)) {
+			if(num_outputs > 1) {
 				strcat(net_name, format);
+				num_outputs--;
 			}
 			strcat(out_list, net_name);
 		}
@@ -80,7 +82,8 @@ void PrintFile(char* file_name, circuit* circ) {
 
 	fputs("'timescale 1ns/1ps\n", fp);
 	fprintf(fp, "module %s(Clk, Rst, %s%s);\n", output_name, in_list, out_list);
-	fputs("\tinput Clk, Rst;", fp);
+	fputs("\n", fp);
+	fputs("\tinput Clk, Rst;\n", fp);
 
 	//Declare I/O Nets
 	LogMessage("MSG: Writing I/O\n", MESSAGE_LEVEL);
