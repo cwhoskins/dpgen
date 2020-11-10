@@ -84,6 +84,8 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 				} else {
 					LogMessage("ERROR: Undeclared variable used\n", ERROR_LEVEL);
 					ret = FAILURE;
+					printf("Error: Undeclared variable used in .txt file\n");
+					exit(FAILURE);
 					break;
 				}
 			}
@@ -101,6 +103,8 @@ uint8_t ParseAssignmentLine(char* first_word, circuit* netlist_circuit) {
 			if(component_unknown == type) {
 				LogMessage("ERROR: Unknown Component\n", ERROR_LEVEL);
 				ret = FAILURE;
+				printf("Error: Unknown component in .txt file\n");
+				exit(FAILURE);
 			} else if(comparator == type) {
 				LogMessage("MSG: Component is comparator\n", MESSAGE_LEVEL);
 				if(0 == strcmp("<", word)) {
@@ -258,6 +262,8 @@ uint8_t ParseNetlistLine(char* line, circuit* netlist_circuit) {
 			   ret = ParseAssignmentLine(line, netlist_circuit);
 		   } else {
 			   LogMessage("ERROR: Undeclared variable used\n", ERROR_LEVEL);
+			   printf("Error: Undeclared variable used in .txt file\n");
+			   exit(FAILURE);
 			   ret = FAILURE;
 		   }
 		   break;
