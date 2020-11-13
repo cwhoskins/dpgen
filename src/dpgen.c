@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
 
 #if DEBUG_MODE == 1
 
-	SetLogFile("dpgen_log.txt");
-	SetLogLevel(MESSAGE_LEVEL);
+	SetLogFile(NULL);
+	SetLogLevel(CIRCUIT_ERROR_LEVEL);
 	LogMessage("dpgen started - DEBUG\n", MESSAGE_LEVEL);
 
 	uint8_t num_tests = 16;
@@ -80,12 +80,15 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	SetLogFile("dpgen_log.txt");
-	SetLogLevel(MESSAGE_LEVEL);
-	LogMessage("dpgen started\r\n\0", MESSAGE_LEVEL);
+	SetLogFile(NULL);
+	SetLogLevel(CIRCUIT_ERROR_LEVEL);
+	LogMessage("dpgen started\n\0", MESSAGE_LEVEL);
 
 	circuit* netlist_circuit = Circuit_Create();
-	ReadNetlist(txt_file, netlist_circuit);
+	if(FAILURE == ReadNetlist(txt_file, netlist_circuit)) {
+		Circuit_Destroy(netlist_circuit);
+		return EXIT_FAILURE;
+	}
 	PrintFile(verilog_file, netlist_circuit);
 
 	Circuit_CalculateDelay(netlist_circuit);
@@ -93,6 +96,8 @@ int main(int argc, char *argv[]) {
 	printf("Critical path: %0.3f ns\n", delay);
 
 	CloseLog();
+	Circuit_Destroy(netlist_circuit);
+
 	return EXIT_SUCCESS;
 #endif
 	

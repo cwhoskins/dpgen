@@ -15,11 +15,14 @@ typedef struct struct_logger {
 logger dpgen_log;
 
 void SetLogFile(char* file_path) {
-
-	dpgen_log.log_file = fopen(file_path, "w+");
-	if(NULL == dpgen_log.log_file) {
-	   printf("Error: Logging Failure\r\n");
-	   return;
+	if(NULL != file_path) {
+		dpgen_log.log_file = fopen(file_path, "w+");
+		if(NULL == dpgen_log.log_file) {
+		   printf("Error: Logging Failure\r\n");
+		   return;
+		}
+	} else {
+		dpgen_log.log_file = stdout;
 	}
 }
 void SetLogLevel(uint8_t level) {

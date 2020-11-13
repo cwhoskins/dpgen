@@ -27,8 +27,8 @@ void PrintFile(char* file_name, circuit* circ) {
 	component* temp_component = NULL;
 	char line_buffer[512];
 
-	char in_list[246];
-	char out_list[246];
+	char in_list[246] = "";
+	char out_list[246] = "";
 	char output_name[64];
 	char format[] = ", ";
 	net* list_temp = NULL;
@@ -149,7 +149,7 @@ void DeclareNet(net* self, char* line_buffer) {
 	if(NULL == self || NULL == line_buffer) return;
 	net_type type = Net_GetType(self);
 	uint8_t net_width = Net_GetWidth(self);
-	char net_type_keyword[16];
+	char net_type_keyword[32];
 	char net_name[64];
 	Net_GetName(self, net_name);
 
@@ -169,6 +169,10 @@ void DeclareNet(net* self, char* line_buffer) {
 	default:
 		strcpy(net_type_keyword, "err");
 		break;
+	}
+
+	if(net_signed == Net_GetSign(self)) {
+		strcat(net_type_keyword, " signed");
 	}
 
 	sprintf(line_buffer, "\t%s [%d:0] %s;\n", net_type_keyword, (net_width-1), net_name);

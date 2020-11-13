@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 
+#define CIRCUIT_ERROR_LEVEL 7
 #define ERROR_LEVEL 5
 #define WARNING_LEVEL 3
 #define MESSAGE_LEVEL 1
