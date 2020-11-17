@@ -292,7 +292,7 @@ uint8_t BufferNet(net** reg_net, circuit* netlist_circuit) {
 			Circuit_AddNet(netlist_circuit, unbuffered_net);
 			new_reg =  Component_Create(load_register);
 			if(NULL != new_reg) {
-				Component_AddOutputPort(new_reg, buffered_net, datapath_out);
+				Component_AddOutputPort(new_reg, buffered_net, reg_out);
 				Component_AddInputPort(new_reg, unbuffered_net, datapath_a);
 				Circuit_AddComponent(netlist_circuit, new_reg);
 				*reg_net = unbuffered_net;
