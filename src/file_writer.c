@@ -29,7 +29,6 @@ void PrintFile(char* file_name, circuit* circ) {
 
 	char in_list[246] = "";
 	char out_list[246] = "";
-	char output_name[64];
 	char format[] = ", ";
 	net* list_temp = NULL;
 	char net_name[64];
@@ -70,18 +69,8 @@ void PrintFile(char* file_name, circuit* circ) {
 		}
 	}
 
-	for(idx = 0; idx < strlen(file_name); idx++) {
-		if(file_name[idx] != '.') {
-			output_name[idx] = file_name[idx];
-		}
-		else {
-			break;
-		}
-	}
-
-
-	fputs("'timescale 1ns/1ps\n", fp);
-	fprintf(fp, "module %s(Clk, Rst, %s%s);\n", output_name, in_list, out_list);
+	fputs("`timescale 1ns/1ps\n", fp);
+	fprintf(fp, "module generated_module(Clk, Rst, %s%s);\n", in_list, out_list);
 	fputs("\n", fp);
 	fputs("\tinput Clk, Rst;\n", fp);
 
@@ -158,7 +147,7 @@ void DeclareNet(net* self, char* line_buffer) {
 		strcpy(net_type_keyword, "input");
 		break;
 	case net_output:
-		strcpy(net_type_keyword, "output reg");
+		strcpy(net_type_keyword, "output");
 		break;
 	case net_wire:
 		strcpy(net_type_keyword, "wire");
@@ -216,9 +205,9 @@ void DeclareComponent(component* self, char* line_buffer, uint8_t comp_idx) {
 				padding_length = Component_GetWidth(self) - Net_GetWidth(temp_port.port_net);
 				padding_bit = Net_GetWidth(temp_port.port_net) - 1;
 				if(net_signed == Net_GetSign(temp_port.port_net)) {
-					sprintf(port_name, "{%d{%s[%d]}, %s}", padding_length, port_net_name, padding_bit, port_net_name);
+					sprintf(port_name, "{{%d{%s[%d]}}, %s}", padding_length, port_net_name, padding_bit, port_net_name);
 				} else if(net_unsigned == Net_GetSign(temp_port.port_net)) {
-					sprintf(port_name, "{%d{1'b0}, %s", padding_length, port_net_name);
+					sprintf(port_name, "{{%d{1'b0}}, %s}", padding_length, port_net_name);
 				}
 			} else {
 				strcpy(port_name, port_net_name);

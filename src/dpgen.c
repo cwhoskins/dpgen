@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 		sprintf(log_msg, "\nMSG: Testing Circuit #%d\n", (idx+1));
 		LogMessage(log_msg, MESSAGE_LEVEL);
 		sprintf(input_file, "./circuits/%d.txt", (idx+1));
-		sprintf(output_file, "./outputs/%d.txt", (idx+1));
+		sprintf(output_file, "./outputs/%d.v", (idx+1));
 
 		netlist_circuit = Circuit_Create();
 		if(NULL == netlist_circuit) {
